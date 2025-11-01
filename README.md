@@ -1,4 +1,5 @@
-# Convertisseur Markdown vers PDF
+# mdtopdf
+Convertisseur de format Markdown vers PDF
 
 Application React pour convertir des fichiers Markdown en PDF.
 
