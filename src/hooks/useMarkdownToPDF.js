@@ -169,19 +169,83 @@ export const useMarkdownToPDF = () => {
       const imgWidth = contentWidth;
       const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
-      let heightLeft = imgHeight;
-      let position = margin;
+      // Logique de découpage intelligent des pages
+      let currentPage = 1;
+      let yPosition = margin;
+      let remainingHeight = imgHeight;
+
+      // Fonction pour vérifier si un élément doit commencer sur une nouvelle page
+      const shouldStartNewPage = (element) => {
+        if (!element) return false;
+
+        // Forcer un saut de page avant les H1 (début de chapitre)
+        if (element.tagName === 'H1') return true;
+
+        // Forcer un saut de page avant les H2 si c'est le début de la page 3 ou plus
+        if (element.tagName === 'H2' && currentPage >= 3) return true;
+
+        // Forcer un saut de page pour les éléments avec la classe 'page-break-before'
+        if (element.classList && element.classList.contains('page-break-before')) return true;
+
+        // Forcer un saut de page pour les éléments avec l'attribut data-page-break
+        if (element.hasAttribute && element.hasAttribute('data-page-break')) return true;
+
+        return false;
+      };
+
+      // Fonction pour calculer la position Y d'un élément dans le canvas
+      const getElementYPosition = (element) => {
+        if (!element) return 0;
+        const rect = element.getBoundingClientRect();
+        const canvasRect = el.getBoundingClientRect();
+        return rect.top - canvasRect.top;
+      };
+
+      // Récupérer tous les éléments qui pourraient nécessiter un saut de page
+      const pageBreakElements = el.querySelectorAll('h1, h2, h3, .page-break-before');
+
+      // Convertir les positions Y des éléments en positions dans le PDF
+      const pageBreakPositions = Array.from(pageBreakElements)
+        .map(element => ({
+          element,
+          yPos: getElementYPosition(element) * (imgHeight / canvas.height)
+        }))
+        .filter(item => shouldStartNewPage(item.element))
+        .sort((a, b) => a.yPos - b.yPos);
 
       // Ajouter la première page
-      pdf.addImage(canvas, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= contentHeight;
+      pdf.addImage(canvas, 'PNG', margin, yPosition, imgWidth, Math.min(remainingHeight, contentHeight), undefined, 'FAST');
 
-      // Ajouter les pages suivantes si nécessaire
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight + margin;
-        pdf.addPage();
-        pdf.addImage(canvas, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= contentHeight;
+      // Gérer les pages suivantes avec sauts de page intelligents
+      while (remainingHeight > 0) {
+        yPosition += contentHeight;
+        remainingHeight -= contentHeight;
+
+        // Vérifier s'il y a un élément qui doit commencer sur cette nouvelle page
+        const nextBreak = pageBreakPositions.find(breakItem =>
+          breakItem.yPos >= yPosition - contentHeight && breakItem.yPos < yPosition
+        );
+
+        if (nextBreak && currentPage >= 2) {
+          // Si on trouve un élément qui doit commencer sur une nouvelle page
+          // et qu'on est après la page 2, forcer un saut de page
+          pdf.addPage();
+          currentPage++;
+
+          // Recalculer la position pour commencer exactement au bon endroit
+          const breakY = nextBreak.yPos;
+          yPosition = breakY + margin;
+          remainingHeight = imgHeight - breakY;
+
+          pdf.addImage(canvas, 'PNG', margin, margin, imgWidth, Math.min(remainingHeight, contentHeight), undefined, 'FAST');
+        } else {
+          // Comportement normal
+          pdf.addPage();
+          currentPage++;
+
+          const displayHeight = Math.min(remainingHeight, contentHeight);
+          pdf.addImage(canvas, 'PNG', margin, margin, imgWidth, displayHeight, undefined, 'FAST');
+        }
       }
 
       // Ajouter entêtes et pieds de page avec des polices nettes

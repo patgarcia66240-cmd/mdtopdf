@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { EyeIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { marked } from 'marked';
 
@@ -9,12 +9,12 @@ interface PDFPreviewProps {
   isDarkMode: boolean;
 }
 
-const PDFPreview: React.FC<PDFPreviewProps> = ({
+const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   markdown,
   previewTheme,
   previewZoom,
   isDarkMode
-}) => {
+}, ref) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'single' | 'all'>('all');
   const [processedHTML, setProcessedHTML] = useState('');
@@ -72,28 +72,40 @@ const PDFPreview: React.FC<PDFPreviewProps> = ({
     modern: {
       fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
       color: '#1e293b',
-      lineHeight: '1.6'
+      lineHeight: '1.4',
+      fontSize: '12px'
     },
     classic: {
       fontFamily: 'Georgia, serif',
       color: '#374151',
-      lineHeight: '1.8'
+      lineHeight: '1.5',
+      fontSize: '11px'
     },
     academic: {
       fontFamily: 'Times New Roman, serif',
       color: '#1f2937',
-      lineHeight: '2.0'
+      lineHeight: '1.6',
+      fontSize: '11px'
     },
     minimal: {
       fontFamily: 'system-ui, sans-serif',
       color: '#374151',
-      lineHeight: '1.5'
+      lineHeight: '1.3',
+      fontSize: '12px'
     }
   };
 
   const currentTheme = themeStyles[previewTheme as keyof typeof themeStyles] || themeStyles.modern;
 
   const getProcessedHTML = async (markdown: string): Promise<string> => {
+    // IMPORTANT: Traiter les pagebreaks AVANT la conversion markdown
+    // car marked.js ne conserve pas bien les commentaires HTML
+    let processedMarkdown = markdown;
+
+    // Support des sauts de page - convertir en balises spéciales
+    processedMarkdown = processedMarkdown.replace(/<!--\s*pagebreak\s*-->|<!--\s*newpage\s*-->/gi, '\n<!--PAGEBREAK-->\n');
+    processedMarkdown = processedMarkdown.replace(/\\pagebreak|\\newpage/gi, '\n<!--PAGEBREAK-->\n');
+
     // Utiliser marked avec les bonnes options pour les tableaux
     const options = {
       breaks: false,    // Désactivé car on insère <br> manuellement
@@ -102,10 +114,10 @@ const PDFPreview: React.FC<PDFPreviewProps> = ({
       pedantic: false   // Détecte les sauts de ligne
     };
 
-    let html = await marked(markdown, options);
+    let html = await marked(processedMarkdown, options);
 
     // Debug: voir ce que marked produit
-    console.log('Markdown input:', markdown);
+    console.log('Markdown input:', processedMarkdown);
     console.log('Marked output:', html);
 
     // Appliquer les styles du thème
@@ -113,61 +125,70 @@ const PDFPreview: React.FC<PDFPreviewProps> = ({
       color: ${currentTheme.color};
       font-family: ${currentTheme.fontFamily};
       line-height: ${currentTheme.lineHeight};
+      font-size: ${currentTheme.fontSize};
     `;
 
-    html = html.replace(/<h1([^>]*)>/g, `<h1$1 style="color: #1e293b; font-size: 28px; margin: 24px 0 16px 0; font-weight: 700;">`);
-    html = html.replace(/<h2([^>]*)>/g, `<h2$1 style="color: #334155; font-size: 22px; margin: 20px 0 12px 0; font-weight: 600;">`);
-    html = html.replace(/<h3([^>]*)>/g, `<h3$1 style="color: #475569; font-size: 18px; margin: 16px 0 10px 0; font-weight: 600;">`);
+    html = html.replace(/<h1([^>]*)>/g, `<h1$1 style="color: #1e293b; font-size: 18px; margin: 16px 0 8px 0; font-weight: 700;">`);
+    html = html.replace(/<h2([^>]*)>/g, `<h2$1 style="color: #334155; font-size: 15px; margin: 12px 0 6px 0; font-weight: 600;">`);
+    html = html.replace(/<h3([^>]*)>/g, `<h3$1 style="color: #475569; font-size: 13px; margin: 10px 0 4px 0; font-weight: 600;">`);
     // Traitement des paragraphes pour préserver les sauts de ligne
     html = html.replace(/<p([^>]*)>([\s\S]*?)<\/p>/g, (_, attrs, content) => {
-      return `<p${attrs} style="margin: 12px 0; ${themeCSS}">${content}</p>`;
+      return `<p${attrs} style="margin: 8px 0; ${themeCSS}">${content}</p>`;
     });
-    html = html.replace(/<ul([^>]*)>/g, `<ul$1 style="margin: 12px 0; padding-left: 24px; ${themeCSS}">`);
-    html = html.replace(/<ol([^>]*)>/g, `<ol$1 style="margin: 12px 0; padding-left: 24px; ${themeCSS}">`);
-    html = html.replace(/<li([^>]*)>/g, `<li$1 style="margin: 6px 0;">`);
-    html = html.replace(/<code([^>]*)>/g, `<code$1 style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em;">`);
-    html = html.replace(/<pre([^>]*)>/g, `<pre$1 style="background-color: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 0.9em; margin: 16px 0; white-space: pre-wrap;">`);
-    html = html.replace(/<blockquote([^>]*)>/g, `<blockquote$1 style="border-left: 4px solid #e5e7eb; padding-left: 16px; margin: 16px 0; font-style: italic; color: #6b7280;">`);
-    html = html.replace(/<table([^>]*)>/g, `<table$1 style="width: 100%; border-collapse: collapse; margin: 16px 0;">`);
-    html = html.replace(/<th([^>]*)>/g, `<th$1 style="border: 1px solid #e5e7eb; padding: 8px 12px; background-color: #f8fafc; text-align: left; font-weight: 600;">`);
-    html = html.replace(/<td([^>]*)>/g, `<td$1 style="border: 1px solid #e5e7eb; padding: 8px 12px;">`);
+    html = html.replace(/<ul([^>]*)>/g, `<ul$1 style="margin: 8px 0; padding-left: 16px; ${themeCSS}">`);
+    html = html.replace(/<ol([^>]*)>/g, `<ol$1 style="margin: 8px 0; padding-left: 16px; ${themeCSS}">`);
+    html = html.replace(/<li([^>]*)>/g, `<li$1 style="margin: 3px 0;">`);
+    html = html.replace(/<code([^>]*)>/g, `<code$1 style="background-color: #f3f4f6; padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 0.8em;">`);
+    html = html.replace(/<pre([^>]*)>/g, `<pre$1 style="background-color: #f8fafc; padding: 8px; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 0.8em; margin: 8px 0; white-space: pre-wrap;">`);
+    html = html.replace(/<blockquote([^>]*)>/g, `<blockquote$1 style="border-left: 3px solid #e5e7eb; padding-left: 12px; margin: 8px 0; font-style: italic; color: #6b7280;">`);
+    html = html.replace(/<table([^>]*)>/g, `<table$1 style="width: 100%; border-collapse: collapse; margin: 8px 0;">`);
+    html = html.replace(/<th([^>]*)>/g, `<th$1 style="border: 1px solid #e5e7eb; padding: 4px 6px; background-color: #f8fafc; text-align: left; font-weight: 600;">`);
+    html = html.replace(/<td([^>]*)>/g, `<td$1 style="border: 1px solid #e5e7eb; padding: 4px 6px;">`);
 
     // Nettoyer les combinaisons <br>\n pour éviter les doublons
     html = html.replace(/<br>\s*\n/g, '<br>');
     html = html.replace(/\n\s*<br>/g, '<br>');
 
     // Traitement simple des styles sans altérer le HTML
-    html = html.replace(/<p([^>]*)>/g, `<p$1 style="margin: 12px 0; ${themeCSS}">`);
+    html = html.replace(/<p([^>]*)>/g, `<p$1 style="margin: 8px 0; ${themeCSS}">`);
 
     // S'assurer que les paragraphes vides créent des espaces
-    html = html.replace(/<p><\/p>/g, '<p style="margin: 12px 0;">&nbsp;</p>');
+    html = html.replace(/<p><\/p>/g, '<p style="margin: 8px 0;">&nbsp;</p>');
 
-    // Support des sauts de page
-    html = html.replace(/<!--\s*pagebreak\s*-->|<!--\s*newpage\s*-->/gi, '<div style="page-break-before: always;"></div>');
-    html = html.replace(/\\pagebreak|\\newpage/gi, '<div style="page-break-before: always;"></div>');
+    // Support des sauts de page - convertir les marqueurs en HTML
+    html = html.replace(/<!--PAGEBREAK-->/gi, '<div style="page-break-before: always; clear: both;"></div>');
 
     return html;
   };
 
-  const calculatePages = (content: string): number => {
-    // Compter les <br> qui représentent les vrais sauts de ligne créés par Entrée
-    const brCount = (content.match(/<br>/gi) || []).length;
+  const calculatePages = (markdown: string): number => {
+    // Compter les sauts de page explicites dans le markdown
+    const pageBreakCount = (markdown.match(/<!--\s*pagebreak\s*-->|<!--\s*newpage\s*-->/gi) || []).length;
 
-    // Environ 15-20 sauts de ligne par page A4 (plus réaliste pour voir la pagination)
+    // Ajouter 1 pour le contenu initial (s'il y a des sauts de page)
+    if (pageBreakCount > 0) {
+      return pageBreakCount + 1;
+    }
+
+    // Si pas de sauts de page explicites, utiliser l'estimation par défaut
+    // Compter les <br> qui représentent les vrais sauts de ligne créés par Entrée
+    const brCount = (markdown.match(/\n/g) || []).length;
+
+    // Environ 40 sauts de ligne par page A4
     const brPerPage = 40;
 
-    // Calcul basé sur les <br>
+    // Calcul basé sur les sauts de ligne
     const pagesByBr = Math.ceil(brCount / brPerPage);
 
     // Au cas où, garder une estimation de secours basée sur la longueur
-    const charCount = content.length;
+    const charCount = markdown.length;
     const pagesByChars = Math.ceil(charCount / 2000);
 
-    // Prendre le maximum entre les <br> et les caractères
+    // Prendre le maximum entre les sauts de ligne et les caractères
     const pages = Math.max(pagesByBr, pagesByChars);
 
-    // Forcer 2 pages pour tester la pagination
-    return Math.max(2, pages);
+    // Minimum 1 page
+    return Math.max(1, pages);
   };
 
   const [totalPages, setTotalPages] = useState(1);
@@ -184,32 +205,55 @@ const PDFPreview: React.FC<PDFPreviewProps> = ({
   }, [markdown, previewTheme]);
 
   const splitContentByPages = (html: string, numPages: number): string[] => {
-    // Créer des pages simples basées sur le contenu total
-    if (numPages <= 1) {
-      return [html];
-    }
+    // D'abord, vérifier s'il y a des sauts de page explicites
+    const pageBreakPattern = /<div[^>]*style="[^"]*page-break-before:\s*always[^"]*"[^>]*><\/div>/gi;
+    const hasPageBreaks = pageBreakPattern.test(html);
 
-    // Diviser le HTML en pages égales
-    const lines = html.split('\n');
-    const linesPerPage = Math.ceil(lines.length / numPages);
-    const pages: string[] = [];
+    if (hasPageBreaks) {
+      // Utiliser les sauts de page explicites
+      const parts = html.split(pageBreakPattern);
+      const pages: string[] = [];
 
-    for (let i = 0; i < numPages; i++) {
-      const start = i * linesPerPage;
-      const end = Math.min(start + linesPerPage, lines.length);
-      const pageLines = lines.slice(start, end);
+      parts.forEach((part, index) => {
+        if (part.trim()) {
+          pages.push(part.trim());
+        }
+      });
 
-      if (pageLines.length > 0) {
-        pages.push(pageLines.join('\n'));
+      // Si on n'a pas trouvé de contenu valide, retourner le HTML complet
+      if (pages.length === 0) {
+        return [html];
       }
-    }
 
-    // S'assurer qu'on a le bon nombre de pages
-    while (pages.length < numPages) {
-      pages.push('<div style="min-height: 200px; padding: 20px; border: 1px dashed #ccc;">Page vide</div>');
-    }
+      return pages;
+    } else {
+      // Comportement par défaut si pas de sauts de page explicites
+      if (numPages <= 1) {
+        return [html];
+      }
 
-    return pages.slice(0, numPages);
+      // Diviser le HTML en pages égales
+      const lines = html.split('\n');
+      const linesPerPage = Math.ceil(lines.length / numPages);
+      const pages: string[] = [];
+
+      for (let i = 0; i < numPages; i++) {
+        const start = i * linesPerPage;
+        const end = Math.min(start + linesPerPage, lines.length);
+        const pageLines = lines.slice(start, end);
+
+        if (pageLines.length > 0) {
+          pages.push(pageLines.join('\n'));
+        }
+      }
+
+      // S'assurer qu'on a le bon nombre de pages
+      while (pages.length < numPages) {
+        pages.push('<div style="min-height: 200px; padding: 20px; border: 1px dashed #ccc;">Page vide</div>');
+      }
+
+      return pages.slice(0, numPages);
+    }
   };
 
   const pageContents = processedHTML ? splitContentByPages(processedHTML, totalPages) : [''];
@@ -428,13 +472,15 @@ const PDFPreview: React.FC<PDFPreviewProps> = ({
       {/* Pagination en haut */}
       {renderPagination()}
 
-      <div style={contentWrapperStyle}>
+      <div ref={ref} style={contentWrapperStyle}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {viewMode === 'single' ? renderSinglePage() : renderAllPages()}
         </div>
       </div>
     </div>
   );
-};
+});
+
+PDFPreview.displayName = 'PDFPreview';
 
 export default PDFPreview;

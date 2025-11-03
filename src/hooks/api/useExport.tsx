@@ -1,59 +1,25 @@
-import React from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { exportService, ExportFormat, ExportOptions } from '@/services/exportService';
-import { useAppStore } from '@/stores/appStore';
-import { useTemplates } from './usePDFQuery';
+import { useMutation } from "@tanstack/react-query";
 
-export const useExport = () => {
-  const queryClient = useQueryClient();
-  const { markdown, pdfOptions, selectedTemplate } = useAppStore();
-  const { data: templates } = useTemplates();
-
-  const exportMutation = useMutation({
-    mutationFn: async (format: ExportFormat) => {
-      const exportOptions: ExportOptions = {
-        format,
-        filename: 'document',
-        markdown: markdown,
-        pdfOptions: format === 'pdf' || format === 'png' ? pdfOptions : undefined,
-        template: selectedTemplate ? templates?.find(t => t.id === selectedTemplate) : undefined,
-      };
-
-      // Validation des options
-      const errors = exportService.validateExportOptions(exportOptions);
-      if (errors.length > 0) {
-        throw new Error(errors.join('\n'));
-      }
-
-      return exportService.exportDocument(exportOptions);
-    },
-    onSuccess: () => {
-      // Invalider les queries pertinentes si nécessaire
-      queryClient.invalidateQueries({ queryKey: ['recent-files'] });
-    },
-    onError: (error) => {
-      console.error('Export failed:', error);
-    },
+async function exportFile(markdown: string, format: "pdf" | "html" | "md", fileName = "document") {
+  const res = await fetch(`/api/export-${format}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ markdown, fileName }),
   });
 
-  const exportToFormat = (format: ExportFormat) => {
-    if (!markdown.trim()) {
-      throw new Error('Aucun contenu à exporter');
-    }
+  if (!res.ok) throw new Error(`Erreur export ${format}`);
 
-    return exportMutation.mutateAsync(format);
-  };
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${fileName}.${format}`;
+  a.click();
+  a.remove();
+}
 
-  return {
-    exportToFormat,
-    isExporting: exportMutation.isPending,
-    exportError: exportMutation.error,
-    supportedFormats: exportService.getSupportedFormats(),
-  };
-};
-
-export const useSupportedFormats = () => {
-  return {
-    formats: exportService.getSupportedFormats(),
-  };
-};
+export const useExport = () =>
+  useMutation({
+    mutationFn: ({ markdown, format, fileName }: { markdown: string; format: "pdf" | "html" | "md"; fileName?: string }) =>
+      exportFile(markdown, format, fileName),
+  });

@@ -1,14 +1,7 @@
 import React from 'react';
 import { Cog6ToothIcon, SwatchIcon, MagnifyingGlassIcon, MinusIcon, PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import FileNameInput from '../ui/FileNameInput';
-
-interface PDFOptions {
-  format: 'a4' | 'letter' | 'legal';
-  orientation: 'portrait' | 'landscape';
-  margins: number;
-  fontSize: number;
-  lineHeight: number;
-}
+import { PDFOptions } from '../../types/app';
 
 interface PDFControlPanelProps {
   pdfOptions: PDFOptions;
@@ -145,13 +138,19 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
 
       {/* Options de mise en page */}
       <div style={sectionStyle}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
           <div>
             <label style={labelStyle}>Marges (mm)</label>
             <input
               type="number"
-              value={pdfOptions.margins}
-              onChange={(e) => updateOption('margins', parseInt(e.target.value))}
+              value={pdfOptions.margins.top}
+              onChange={(e) => updateOption('margins', {
+                ...pdfOptions.margins,
+                top: parseInt(e.target.value),
+                right: parseInt(e.target.value),
+                bottom: parseInt(e.target.value),
+                left: parseInt(e.target.value)
+              })}
               min="5"
               max="50"
               style={inputStyle}
@@ -165,18 +164,6 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
               onChange={(e) => updateOption('fontSize', parseInt(e.target.value))}
               min="8"
               max="24"
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Interligne</label>
-            <input
-              type="number"
-              step="0.1"
-              value={pdfOptions.lineHeight}
-              onChange={(e) => updateOption('lineHeight', parseFloat(e.target.value))}
-              min="1"
-              max="2.5"
               style={inputStyle}
             />
           </div>

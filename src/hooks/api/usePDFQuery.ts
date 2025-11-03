@@ -1,57 +1,25 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { pdfService } from '@/services/pdfService';
-import { PDFOptions } from '@/types/app';
+import { useMutation } from "@tanstack/react-query";
 
-export const usePDFGeneration = () => {
-  const queryClient = useQueryClient();
-
-  const generatePDFMutation = useMutation({
-    mutationFn: ({ markdown, options }: { markdown: string; options: PDFOptions }) =>
-      pdfService.generatePDF(markdown, options),
-    onSuccess: (blob) => {
-      // Déclencher le téléchargement
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'document.pdf';
-      a.click();
-      URL.revokeObjectURL(url);
-
-      // Invalider les queries pertinentes
-      queryClient.invalidateQueries({ queryKey: ['recent-files'] });
-    },
-    onError: (error) => {
-      console.error('PDF generation failed:', error);
-    },
+async function exportPDF(markdown: string, fileName = "document") {
+  const res = await fetch(`/api/export-pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ markdown, fileName }),
   });
 
-  const previewPDFMutation = useMutation({
-    mutationFn: ({ markdown, options }: { markdown: string; options: PDFOptions }) =>
-      pdfService.generatePDFPreview(markdown, options),
-  });
+  if (!res.ok) throw new Error("Erreur export PDF");
 
-  return {
-    generatePDF: generatePDFMutation.mutate,
-    isGenerating: generatePDFMutation.isPending,
-    generateError: generatePDFMutation.error,
-    generatePreview: previewPDFMutation.mutate,
-    isPreviewGenerating: previewPDFMutation.isPending,
-    previewError: previewPDFMutation.error,
-  };
-};
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${fileName}.pdf`;
+  a.click();
+  a.remove();
+}
 
-export const useTemplates = () => {
-  return useQuery({
-    queryKey: ['templates'],
-    queryFn: () => pdfService.getTemplates(),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+export const usePDFQuery = () =>
+  useMutation({
+    mutationFn: ({ markdown, fileName }: { markdown: string; fileName?: string }) =>
+      exportPDF(markdown, fileName),
   });
-};
-
-export const useRecentFiles = () => {
-  return useQuery({
-    queryKey: ['recent-files'],
-    queryFn: () => pdfService.getRecentFiles(),
-    staleTime: 1000 * 60, // 1 minute
-  });
-};

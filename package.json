@@ -29,6 +29,7 @@
     "immer": "^10.2.0",
     "jspdf": "^2.5.2",
     "marked": "^16.4.1",
+    "md-to-pdf": "^5.2.4",
     "react": "^18.2.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
@@ -36,7 +37,9 @@
     "react-markdown": "^9.0.1",
     "react-window": "^2.2.2",
     "react-window-infinite-loader": "^2.0.0",
-    "remark-gfm": "^4.0.0",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-html": "^16.0.1",
     "zustand": "^5.0.8"
   },
   "lint-staged": {

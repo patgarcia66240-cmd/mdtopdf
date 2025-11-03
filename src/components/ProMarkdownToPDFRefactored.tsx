@@ -5,8 +5,9 @@ import PDFControlPanel from './modules/PDFControlPanel';
 import PDFPreview from './modules/PDFPreview';
 import TemplateSelector from './modules/TemplateSelector';
 import ExportPanel from './modules/ExportPanel';
-import { usePDFExport, PDFOptions } from '../hooks/usePDFExport';
+import { usePDFExport } from '../hooks/usePDFExport';
 import { useTemplates } from '../hooks/useTemplates';
+import { PDFOptions } from '../types/app';
 
 const ProMarkdownToPDFRefactored: React.FC = () => {
   const markdownRef = useRef<HTMLDivElement>(null);
@@ -31,10 +32,8 @@ Voici différents types de contenu pour tester :
 
 **Texte en gras** et *texte en italique* avec des émojis ! 🌟
 
-<br>
 Premier saut de ligne manuel ! 👋
 
-<br>
 Deuxième saut de ligne ! 🎉
 
 ### 📊 Tableau de données
@@ -44,7 +43,6 @@ Deuxième saut de ligne ! 🎉
 | Bob | Designer | 🎨 En création |
 | Charlie | Manager | 📋 Planning |
 
-<br>
 ### 🎯 Points importants à considérer
 - Lorem ipsum dolor sit amet, consectetur adipiscing elit
 - Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
@@ -52,18 +50,15 @@ Deuxième saut de ligne ! 🎉
 - Duis aute irure dolor in reprehenderit in voluptate velit esse
 - Excepteur sint occaecat cupidatat non proident sunt in culpa
 
-<br>
 ### 📝 Contenu additionnel pour la page 1
 Ceci est du contenu supplémentaire pour s'assurer que la première page est bien remplie et que le saut de page fonctionne correctement.
 
-<br>
 Plus de texte pour remplir l'espace :
 - Item 1 avec description détaillée
 - Item 2 avec information complémentaire
 - Item 3 avec données techniques
 - Item 4 avec spécifications importantes
 
-<br>
 Fin de la première page ! 📖
 
 <!-- pagebreak -->
@@ -87,7 +82,6 @@ const resultat = calculerSomme(5, 3);
 console.log(\`Résultat: \${resultat}\`);
 \`\`\`
 
-<br>
 ### 📝 Listes diverses
 Liste à puces avec émojis :
 - 🍎 Pommes rouges et juteuses
@@ -97,7 +91,6 @@ Liste à puces avec émojis :
 - 🍓 Fraises des bois savoureuses
 - 🥑 Avocats crémeux et nutritifs
 
-<br>
 Liste numérotée :
 1. Premier élément avec beaucoup de détails 🥇
 2. Deuxième élément avec informations complémentaires 🥈
@@ -105,20 +98,17 @@ Liste numérotée :
 4. Quatrième élément avec options avancées
 5. Cinquième élément avec paramètres configurables
 
-<br>
 ### 🎯 Citations et Mises en garde
 > "La technologie est meilleure quand elle améliore la vie des gens de manière significative et durable." 💡
 
 ⚠️ **Attention :** Ceci est un test d'avertissement important qui doit être bien visible sur la deuxième page !
 
-<br>
 ### 📊 Données et statistiques
 - Performance : 95% d'efficacité
 - Satisfaction : 4.8/5 étoiles
 - Utilisateurs : +10,000 actifs
 - Disponibilité : 99.9% uptime
 
-<br>
 Milieu du document ! 🎪
 
 <!-- pagebreak -->
@@ -130,13 +120,11 @@ Milieu du document ! 🎪
 - ✅ Émojis bien affichés et interprétés
 - ✅ Tableaux correctement rendus avec bordures
 - ✅ Code et formatage préservés
-- ✅ Sauts de page explicites avec <!-- pagebreak -->
+- ✅ Sauts de page explicites avec
 
-<br>
 ### 🎁 Bonus: Émojis variés
 Testons différents émojis : 😎 🎈 🎭 🎪 🎨 🎬 🎮 🎯 🎲 🎁 🎉 🎊 🎈 🎆 🎇 🧨 ✨ 🌟 💫 ⭐ 🌠 🚀 🌙 ⭐ 🌈 🔥 💧 ❄️ ⚡ 🌪️ 🌪️
 
-<br>
 ### 📊 Tableau complexe
 | Produit | Prix | Stock | Notes | Évaluation |
 |---------|------|-------|-------|------------|
@@ -147,21 +135,17 @@ Testons différents émojis : 😎 🎈 🎭 🎪 🎨 🎬 🎮 🎯 🎲 🎁 
 | 📷 Appareil photo | 899€ | 🟢 | Populaire | ⭐⭐⭐⭐⭐ |
 | 🎮 Console | 499€ | 🔴 | Attendue | ⭐⭐⭐⭐ |
 
-<br>
 ### 📝 Conclusion finale
 Merci d'avoir testé ce document sur 3 pages avec des sauts de page explicites ! 🙏
 
-<br>
 ### 🔄 Instructions finales
-- Le saut de page utilise <!-- pagebreak -->
+- Le saut de page utilise
 - Chaque page devrait être distincte dans l'aperçu
 - Les tableaux, émojis et formatage sont préservés
 - Le mode "all" affiche toutes les pages simultanément
 
-<br>
 **Fin du document complet** 📚✨
 
-<br>
 Dernier saut de ligne avant la fin absolue ! 👋🎉🚀
 
 Texte **gras**, texte *italique* et \`code en ligne\`.
@@ -195,9 +179,14 @@ Texte **gras**, texte *italique* et \`code en ligne\`.
   const [pdfOptions, setPdfOptions] = useState<PDFOptions>({
     format: 'a4',
     orientation: 'portrait',
-    margins: 20,
+    margins: {
+      top: 20,
+      right: 20,
+      bottom: 20,
+      left: 20
+    },
     fontSize: 12,
-    lineHeight: 1.6
+    fontFamily: 'Inter'
   });
 
   // Calcul des statistiques
@@ -294,7 +283,7 @@ Texte **gras**, texte *italique* et \`code en ligne\`.
     if (!markdownRef.current) return;
 
     try {
-      await exportToPDF(markdownRef.current, fileName, pdfOptions);
+      await exportToPDF(markdownRef, fileName, pdfOptions);
     } catch (error) {
       console.error('Export PDF failed:', error);
     }
@@ -429,6 +418,7 @@ Texte **gras**, texte *italique* et \`code en ligne\`.
         <div style={rightPanelStyle}>
           {!showTemplates && !showExport && (
             <PDFPreview
+              ref={markdownRef}
               markdown={markdown}
               previewTheme={previewTheme}
               previewZoom={previewZoom}
