@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useExport } from "./hooks/api/useExport"; // 🔥 Hook d’export serverless TanStack
+import { useExport } from "./hooks/api/useExport"; // 🔥 Hook d'export serverless TanStack
 import InputWithButton from "./components/ui/InputWithButton";
 import TemplateCard from "./components/ui/TemplateCard";
 import {
@@ -55,7 +55,7 @@ function App() {
     minHeight: "100vh",
     backgroundColor: isDark ? "#1a1a1a" : "#f5f5f5",
     color: isDark ? "#ffffff" : "#333333",
-    padding: "20px",
+    padding: "20px 0", // Padding vertical seulement, horizontal géré par app-container
     fontFamily: "Arial, sans-serif",
   };
 
@@ -95,7 +95,7 @@ function App() {
 
   const buttonStyle = {
     padding: "15px 30px",
-    backgroundColor: "#2563eb",
+    background: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
     color: "white",
     border: "none",
     borderRadius: "8px",
@@ -121,7 +121,7 @@ function App() {
 
   // ----- Rendu -----
   return (
-    <div style={containerStyle}>
+    <div className="app-container" style={containerStyle}>
       {/* --- Header --- */}
       <h1
         style={{

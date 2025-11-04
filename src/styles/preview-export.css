@@ -1,0 +1,182 @@
+/* Styles pour les blocs de code preview-export */
+
+/* Classe principale pour les blocs de code */
+.preview-export {
+  /* Fond et bordures */
+  background-color: #e0e9f3;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+
+  /* Espacement */
+  padding: 8px;
+  margin: 10px 0;
+
+  /* Typographie */
+  font-family: 'Courier New', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.3;
+
+  /* Comportement */
+  overflow-x: auto;
+  white-space: pre;
+  word-wrap: normal;
+  overflow-wrap: normal;
+}
+
+/* Classe pour le code inline */
+.preview-code {
+  background: #e2e8f0;
+  padding: 0;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  white-space: pre;
+}
+
+/* Styles globaux pour le markdown dans l'aperçu PDF */
+.markdown-body strong,
+.markdown-body b {
+  font-weight: 700 !important;
+  color: inherit !important;
+}
+
+.markdown-body div[style*="display: flex"] strong,
+.markdown-body div[style*="display: grid"] strong,
+.markdown-body div[style*="display: flex"] b,
+.markdown-body div[style*="display: grid"] b {
+  font-weight: 700 !important;
+  color: inherit !important;
+}
+
+.markdown-body div[style*="display: flex"],
+.markdown-body div[style*="display: grid"] {
+  font-weight: inherit !important;
+}
+
+/* Classes pour les blocs de code JavaScript et Python */
+.markdown-body .code-block-blue {
+  background-color: #eff6ff !important;
+  padding: 12px !important;
+  border-radius: 6px !important;
+  overflow-x: auto !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-size: 0.85em !important;
+  margin: 8px 0 !important;
+  white-space: pre-wrap !important;
+  border: 1px solid #dbeafe !important;
+  border-left: 1px solid #3b82f6 !important;
+}
+
+.markdown-body .code-block-default {
+  background-color: #f8fafc !important;
+  padding: 8px !important;
+  border-radius: 4px !important;
+  overflow-x: auto !important;
+  font-family: monospace !important;
+  font-size: 0.8em !important;
+  margin: 8px 0 !important;
+  white-space: pre-wrap !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Styles pour les titres markdown */
+.markdown-body .h1-preview {
+  color: #1e293b !important;
+  font-size: 18px !important;
+  margin: 16px 0 8px 0 !important;
+  font-weight: 700 !important;
+}
+
+.markdown-body .h2-preview {
+  color: #334155 !important;
+  font-size: 15px !important;
+  margin: 12px 0 6px 0 !important;
+  font-weight: 600 !important;
+}
+
+.markdown-body .h3-preview {
+  color: #475569 !important;
+  font-size: 13px !important;
+  margin: 10px 0 4px 0 !important;
+  font-weight: 600 !important;
+}
+
+.markdown-body .h4-preview {
+  color: #64748b !important;
+  font-size: 11px !important;
+  margin: 8px 0 3px 0 !important;
+  font-weight: 500 !important;
+}
+
+.markdown-body .h5-preview {
+  color: #64748b !important;
+  font-size: 10px !important;
+  margin: 6px 0 2px 0 !important;
+  font-weight: 500 !important;
+}
+
+.markdown-body .h6-preview {
+  color: #64748b !important;
+  font-size: 9px !important;
+  margin: 4px 0 1px 0 !important;
+  font-weight: 500 !important;
+}
+
+/* Styles pour les paragraphes */
+.markdown-body .p-preview {
+  margin: 8px 0 !important;
+}
+
+/* Styles pour les listes */
+.markdown-body .ul-preview {
+  margin: 8px 0 !important;
+  padding-left: 16px !important;
+}
+
+.markdown-body .ol-preview {
+  margin: 8px 0 !important;
+  padding-left: 16px !important;
+}
+
+.markdown-body .li-preview {
+  margin: 3px 0 !important;
+}
+
+/* Styles pour le code inline */
+.markdown-body .code-inline {
+  background-color: #f3f4f6 !important;
+  padding: 1px 4px !important;
+  border-radius: 3px !important;
+  font-family: monospace !important;
+  font-size: 0.8em !important;
+}
+
+/* Styles pour les blockquotes */
+.markdown-body .blockquote-preview {
+  border-left: 3px solid #e5e7eb !important;
+  padding-left: 12px !important;
+  margin: 8px 0 !important;
+  font-style: italic !important;
+  color: #6b7280 !important;
+}
+
+/* Styles pour les tableaux */
+.markdown-body .table-preview {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 8px 0 !important;
+}
+
+.markdown-body .th-preview {
+  border: 1px solid #e5e7eb !important;
+  padding: 4px 6px !important;
+  background-color: #f8fafc !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+}
+
+.markdown-body .td-preview {
+  border: 1px solid #e5e7eb !important;
+  padding: 4px 6px !important;
+}

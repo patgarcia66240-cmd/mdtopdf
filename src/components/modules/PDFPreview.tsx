@@ -1,23 +1,51 @@
 import React, { useState, useEffect, forwardRef } from 'react';
-import { EyeIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { EyeIcon } from '@heroicons/react/24/outline';
 import { marked } from 'marked';
+import PaginationControls from './PaginationControls';
+
+// Import direct du CSS en tant que chaîne pour garantir le chargement
+
 
 interface PDFPreviewProps {
   markdown: string;
   previewTheme: string;
   previewZoom: number;
   isDarkMode: boolean;
+  currentPage?: number;
+  setCurrentPage?: (page: number) => void;
+  totalPages?: number;
+  setTotalPages?: (pages: number) => void;
+  viewMode?: 'single' | 'all';
+  onViewModeChange?: (mode: 'single' | 'all') => void;
+  onZoomChange?: (zoom: number) => void;
 }
 
 const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   markdown,
   previewTheme,
   previewZoom,
-  isDarkMode
+  isDarkMode,
+  currentPage: externalCurrentPage,
+  setCurrentPage: externalSetCurrentPage,
+  totalPages: externalTotalPages,
+  setTotalPages: externalSetTotalPages,
+  viewMode: externalViewMode,
+  onViewModeChange: externalOnViewModeChange,
+  onZoomChange: externalOnZoomChange
 }, ref) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<'single' | 'all'>('all');
+  // Utiliser les états externes ou les états locaux
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
+  const [internalViewMode, setInternalViewMode] = useState<'single' | 'all'>('all');
+  const [internalTotalPages, setInternalTotalPages] = useState(1);
   const [processedHTML, setProcessedHTML] = useState('');
+
+  const currentPage = externalCurrentPage ?? internalCurrentPage;
+  const setCurrentPage = externalSetCurrentPage ?? setInternalCurrentPage;
+  const totalPages = externalTotalPages ?? internalTotalPages;
+  const setTotalPages = externalSetTotalPages ?? setInternalTotalPages;
+  const viewMode = externalViewMode ?? internalViewMode;
+  const onViewModeChange = externalOnViewModeChange ?? setInternalViewMode;
+  const onZoomChange = externalOnZoomChange ?? (() => {});
 
   const previewStyle = {
     backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
@@ -57,7 +85,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
 
   const contentStyle: React.CSSProperties = {
     backgroundColor: '#ffffff',
-    padding: '0mm 20mm 20mm 20mm', // Marge supérieure réduite
+    padding: '0mm 20mm 10mm 20mm', // Marges optimisées : haut 0mm, bas 10mm (juste pour le footer)
     borderRadius: '4px',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
     width: '210mm', // A4 width exact
@@ -67,6 +95,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
     position: 'relative'
   };
 
+  
   // Thèmes CSS pour l'aperçu
   const themeStyles = {
     modern: {
@@ -116,9 +145,92 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
 
     let html = await marked(processedMarkdown, options);
 
-    // Debug: voir ce que marked produit
-    console.log('Markdown input:', processedMarkdown);
-    console.log('Marked output:', html);
+    // POST-TRAITEMENT: Corriger le markdown gras qui n'a pas été converti par marked.js
+    // Problème: les **texte** dans les conteneurs HTML ne sont pas toujours convertis
+    const convertBoldMarkdown = (text: string): string => {
+      const parts = text.split(/(<[^>]*>)/);
+      return parts.map((part, index) => {
+        if (index % 2 === 0) { // Contenu textuel uniquement
+          return part
+            .replace(/\*\*([^*\n\r]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/__([^_\n\r]+)__/g, '<strong>$1</strong>');
+        }
+        return part; // Balises HTML inchangées
+      }).join('');
+    };
+
+    // Fonction pour réduire la police dans les colonnes
+    const reduceFontInColumns = (html: string): string => {
+      // Plusieurs approches différentes
+
+      // 1. Traitement direct des conteneurs flex/grid
+      html = html.replace(/<div[^>]*style="display:\s*(flex|grid)[^"]*"[^>]*>(.*?)<\/div>/gs, (match) => {
+        return match.replace(/<strong([^>]*)>(.*?)<\/strong>/g, '<strong$1 style="font-weight: 700 !important; font-size: 0.75em !important; line-height: 1.2 !important;">$2</strong>');
+      });
+
+      // 2. Traitement des strong dans flex/grid (au cas où les strong sont seuls)
+      html = html.replace(/<div[^>]*style="display:\s*(flex|grid)[^"]*">[^<]*<strong([^>]*)>(.*?)<\/strong>/g, (_, attrs, content) => {
+        return `<div${attrs} style="display: flex"><strong style="font-weight: 700 !important; font-size: 0.75em !important; line-height: 1.2 !important;">${content}</strong>`;
+      });
+
+      // 3. Traitement forcé avec styles inline plus forts
+      html = html.replace(/<strong([^>]*)>(.*?)<\/strong>/g, (match, attrs, content) => {
+        // Vérifier si ce strong est potentiellement dans une colonne
+        const precedingDivs = html.substring(0, html.indexOf(match)).split('<div');
+        const lastDiv = precedingDivs[precedingDivs.length - 1];
+        if (lastDiv && (lastDiv.includes('display: flex') || lastDiv.includes('display: grid'))) {
+          return `<strong${attrs} style="font-weight: 600 !important; font-size: 0.75em !important; line-height: 1.2 !important;">${content}</strong>`;
+        }
+        return match;
+      });
+
+      return html;
+    };
+
+    html = convertBoldMarkdown(html);
+
+    // Réduire la police dans les colonnes après conversion du markdown
+    console.log('=== DEBUG COLUMN SIZING ===');
+    console.log('HTML before column processing:', html);
+    html = reduceFontInColumns(html);
+    console.log('HTML after column processing:', html);
+
+    // Ajouter des styles CSS spécifiques pour forcer la police dans les colonnes
+    const columnStyles = `
+      <style>
+        /* Styles universels pour les colonnes */
+        .markdown-body div[style*="display: flex"] strong,
+        .markdown-body div[style*="display: grid"] strong,
+        div[style*="display: flex"] strong,
+        div[style*="display: grid"] strong {
+          font-size: 0.75em !important;
+          line-height: 1.2 !important;
+          font-weight: 600 !important;
+        }
+
+        /* Styles encore plus spécifiques */
+        .preview-container div[style*="display: flex"] strong,
+        .preview-container div[style*="display: grid"] strong {
+          font-size: 0.75em !important;
+          line-height: 1.2 !important;
+          font-weight: 600 !important;
+        }
+
+        /* Forcer tous les strong dans les conteneurs flex */
+        [style*="display: flex"] > strong,
+        [style*="display: grid"] > strong {
+          font-size: 0.75em !important;
+          line-height: 1.2 !important;
+          font-weight: 600 !important;
+        }
+      </style>
+    `;
+    html += columnStyles;
+    console.log('Final HTML with column styles:', html);
+
+    // Forcer le style gras pour tous les strong/b (au cas où)
+    html = html.replace(/<strong([^>]*)>/g, '<strong$1 style="font-weight: 700 !important;">');
+    html = html.replace(/<b([^>]*)>/g, '<b$1 style="font-weight: 700 !important;">');
 
     // Appliquer les styles du thème
     const themeCSS = `
@@ -128,84 +240,99 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
       font-size: ${currentTheme.fontSize};
     `;
 
-    html = html.replace(/<h1([^>]*)>/g, `<h1$1 style="color: #1e293b; font-size: 18px; margin: 16px 0 8px 0; font-weight: 700;">`);
-    html = html.replace(/<h2([^>]*)>/g, `<h2$1 style="color: #334155; font-size: 15px; margin: 12px 0 6px 0; font-weight: 600;">`);
-    html = html.replace(/<h3([^>]*)>/g, `<h3$1 style="color: #475569; font-size: 13px; margin: 10px 0 4px 0; font-weight: 600;">`);
-    // Traitement des paragraphes pour préserver les sauts de ligne
-    html = html.replace(/<p([^>]*)>([\s\S]*?)<\/p>/g, (_, attrs, content) => {
-      return `<p${attrs} style="margin: 8px 0; ${themeCSS}">${content}</p>`;
+    html = html.replace(/<h1([^>]*)>/g, `<h1$1 class="text-slate-900 text-lg font-black my-4 font-black" style="font-weight: 900 !important;">`);
+    html = html.replace(/<h2([^>]*)>/g, `<h2$1 class="text-slate-700 text-base font-black my-3 font-black" style="font-weight: 900 !important;">`);
+    html = html.replace(/<h3([^>]*)>/g, `<h3$1 class="text-slate-600 text-sm font-black my-3 font-black" style="font-weight: 900 !important;">`);
+    html = html.replace(/<h4([^>]*)>/g, `<h4$1 class="text-slate-500 text-xs font-bold my-2 font-bold" style="font-weight: 700 !important;">`);
+
+    // Styles pour le texte gras (strong et b)
+    html = html.replace(/<strong([^>]*)>/g, `<strong$1 style="font-weight: 700; color: inherit;">`);
+    html = html.replace(/<b([^>]*)>/g, `<b$1 style="font-weight: 700; color: inherit;">`);
+
+    // Styles pour le texte italique (em et i)
+    html = html.replace(/<em([^>]*)>/g, `<em$1 style="font-style: italic; color: inherit;">`);
+    html = html.replace(/<i([^>]*)>/g, `<i$1 style="font-style: italic; color: inherit;">`);
+
+    // Ajouter un style global pour forcer l'héritage du font-weight dans tous les conteneurs
+    html = html.replace(/<div([^>]*style="[^"]*display:\s*(flex|grid)[^"]*"[^>]*)>/g, (match, attrs) => {
+      if (!attrs.includes('font-weight')) {
+        return `<div${attrs.replace(/style="/, 'style="font-weight: inherit; ')}>`;
+      }
+      return match;
     });
-    html = html.replace(/<ul([^>]*)>/g, `<ul$1 style="margin: 8px 0; padding-left: 16px; ${themeCSS}">`);
-    html = html.replace(/<ol([^>]*)>/g, `<ol$1 style="margin: 8px 0; padding-left: 16px; ${themeCSS}">`);
-    html = html.replace(/<li([^>]*)>/g, `<li$1 style="margin: 3px 0;">`);
-    html = html.replace(/<code([^>]*)>/g, `<code$1 style="background-color: #f3f4f6; padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 0.8em;">`);
-    html = html.replace(/<pre([^>]*)>/g, `<pre$1 style="background-color: #f8fafc; padding: 8px; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 0.8em; margin: 8px 0; white-space: pre-wrap;">`);
-    html = html.replace(/<blockquote([^>]*)>/g, `<blockquote$1 style="border-left: 3px solid #e5e7eb; padding-left: 12px; margin: 8px 0; font-style: italic; color: #6b7280;">`);
-    html = html.replace(/<table([^>]*)>/g, `<table$1 style="width: 100%; border-collapse: collapse; margin: 8px 0;">`);
-    html = html.replace(/<th([^>]*)>/g, `<th$1 style="border: 1px solid #e5e7eb; padding: 4px 6px; background-color: #f8fafc; text-align: left; font-weight: 600;">`);
-    html = html.replace(/<td([^>]*)>/g, `<td$1 style="border: 1px solid #e5e7eb; padding: 4px 6px;">`);
+
+        // Traitement des paragraphes pour préserver les sauts de ligne avec Tailwind
+    html = html.replace(/<p([^>]*)>/g, `<p$1 class="my-2" style="${themeCSS}">`);
+    html = html.replace(/<ul([^>]*)>/g, `<ul$1 class="my-2 ml-4 list-disc" style="${themeCSS}">`);
+    html = html.replace(/<ol([^>]*)>/g, `<ol$1 class="my-2 ml-4 list-decimal" style="${themeCSS}">`);
+    html = html.replace(/<li([^>]*)>/g, `<li$1 class="my-1">`);
+    html = html.replace(/<code([^>]*)>/g, `<code$1 class="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono">`);
+
+    // Appliquer des classes Tailwind pour les blocs de code JavaScript et Python avec accent bleu
+    html = html.replace(/<pre([^>]*)><code([^>]*class="[^"]*language-javascript[^"]*"[^>]*)>/g, (_, preAttrs, codeAttrs) => {
+      return `<pre${preAttrs} class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border-2 border-blue-500 shadow-lg overflow-x-auto font-mono text-sm my-3 whitespace-pre-wrap relative before:absolute before:top-0 before:left-0 before:right-0 before:h-1 before:bg-gradient-to-r before:from-blue-500 before:to-blue-400 before:rounded-t-xl"><code${codeAttrs} class="bg-transparent">`;
+    });
+
+    html = html.replace(/<pre([^>]*)><code([^>]*class="[^"]*language-js[^"]*"[^>]*)>/g, (_, preAttrs, codeAttrs) => {
+      return `<pre${preAttrs} class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border-2 border-blue-500 shadow-lg overflow-x-auto font-mono text-sm my-3 whitespace-pre-wrap relative before:absolute before:top-0 before:left-0 before:right-0 before:h-1 before:bg-gradient-to-r before:from-blue-500 before:to-blue-400 before:rounded-t-xl"><code${codeAttrs} class="bg-transparent">`;
+    });
+
+    // Appliquer le même style bleu pour les blocs de code Python
+    html = html.replace(/<pre([^>]*)><code([^>]*class="[^"]*language-python[^"]*"[^>]*)>/g, (_, preAttrs, codeAttrs) => {
+      return `<pre${preAttrs} class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border-2 border-blue-500 shadow-lg overflow-x-auto font-mono text-sm my-3 whitespace-pre-wrap relative before:absolute before:top-0 before:left-0 before:right-0 before:h-1 before:bg-gradient-to-r before:from-blue-500 before:to-blue-400 before:rounded-t-xl"><code${codeAttrs} class="bg-transparent">`;
+    });
+
+    html = html.replace(/<pre([^>]*)><code([^>]*class="[^"]*language-py[^"]*"[^>]*)>/g, (_, preAttrs, codeAttrs) => {
+      return `<pre${preAttrs} class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border-2 border-blue-500 shadow-lg overflow-x-auto font-mono text-sm my-3 whitespace-pre-wrap relative before:absolute before:top-0 before:left-0 before:right-0 before:h-1 before:bg-gradient-to-r before:from-blue-500 before:to-blue-400 before:rounded-t-xl"><code${codeAttrs} class="bg-transparent">`;
+    });
+
+    // Appliquer la classe par défaut Tailwind pour les autres blocs pre
+    html = html.replace(/<pre(?!\s+class="[^"]*code-block)([^>]*)>/g, (match, attrs) => {
+      if (attrs.includes('class=')) {
+        // Le pre a déjà une classe, on ajoute les classes Tailwind
+        return match.replace(/class="([^"]*)"/, 'class="$1 bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200 shadow-sm overflow-x-auto font-mono text-xs my-2 whitespace-pre-wrap"');
+      } else {
+        // Le pre n'a pas de classe, on ajoute les classes Tailwind
+        return `<pre class="bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200 shadow-sm overflow-x-auto font-mono text-xs my-2 whitespace-pre-wrap"${attrs}>`;
+      }
+    });
+
+        html = html.replace(/<blockquote([^>]*)>/g, `<blockquote$1 class="border-l-4 border-gray-300 pl-4 my-2 italic text-gray-600">`);
+    html = html.replace(/<table([^>]*)>/g, `<table$1 class="w-full border-collapse my-2">`);
+    html = html.replace(/<th([^>]*)>/g, `<th$1 class="border border-gray-200 px-2 py-1 bg-gray-50 text-left text-xs font-semibold">`);
+    html = html.replace(/<td([^>]*)>/g, `<td$1 class="border border-gray-200 px-2 py-1 text-xs">`);
 
     // Nettoyer les combinaisons <br>\n pour éviter les doublons
     html = html.replace(/<br>\s*\n/g, '<br>');
     html = html.replace(/\n\s*<br>/g, '<br>');
 
-    // Traitement simple des styles sans altérer le HTML
-    html = html.replace(/<p([^>]*)>/g, `<p$1 style="margin: 8px 0; ${themeCSS}">`);
-
     // S'assurer que les paragraphes vides créent des espaces
-    html = html.replace(/<p><\/p>/g, '<p style="margin: 8px 0;">&nbsp;</p>');
+    html = html.replace(/<p><\/p>/g, '<p class="p-preview">&nbsp;</p>');
 
     // Support des sauts de page - convertir les marqueurs en HTML
     html = html.replace(/<!--PAGEBREAK-->/gi, '<div style="page-break-before: always; clear: both;"></div>');
 
+    // Pas besoin d'ajouter la classe markdown-body - elle ajoute des marges indésirables
+
     return html;
   };
 
-  const calculatePages = (markdown: string): number => {
-    // Compter les sauts de page explicites dans le markdown
-    const pageBreakCount = (markdown.match(/<!--\s*pagebreak\s*-->|<!--\s*newpage\s*-->/gi) || []).length;
-
-    // Ajouter 1 pour le contenu initial (s'il y a des sauts de page)
-    if (pageBreakCount > 0) {
-      return pageBreakCount + 1;
-    }
-
-    // Si pas de sauts de page explicites, utiliser l'estimation par défaut
-    // Compter les <br> qui représentent les vrais sauts de ligne créés par Entrée
-    const brCount = (markdown.match(/\n/g) || []).length;
-
-    // Environ 40 sauts de ligne par page A4
-    const brPerPage = 40;
-
-    // Calcul basé sur les sauts de ligne
-    const pagesByBr = Math.ceil(brCount / brPerPage);
-
-    // Au cas où, garder une estimation de secours basée sur la longueur
-    const charCount = markdown.length;
-    const pagesByChars = Math.ceil(charCount / 2000);
-
-    // Prendre le maximum entre les sauts de ligne et les caractères
-    const pages = Math.max(pagesByBr, pagesByChars);
-
-    // Minimum 1 page
-    return Math.max(1, pages);
-  };
-
-  const [totalPages, setTotalPages] = useState(1);
-
+ 
+  
   // Traiter le HTML quand le markdown ou le thème change
   useEffect(() => {
     const processHTML = async () => {
       const html = await getProcessedHTML(markdown);
       setProcessedHTML(html);
-      setTotalPages(calculatePages(markdown));
+      const pages = splitContentByPages(html);
+      setTotalPages(pages.length);
       setCurrentPage(1);
     };
     processHTML();
   }, [markdown, previewTheme]);
 
-  const splitContentByPages = (html: string, numPages: number): string[] => {
-    // D'abord, vérifier s'il y a des sauts de page explicites
+  const splitContentByPages = (html: string): string[] => {
+    // Vérifier s'il y a des sauts de page explicites
     const pageBreakPattern = /<div[^>]*style="[^"]*page-break-before:\s*always[^"]*"[^>]*><\/div>/gi;
     const hasPageBreaks = pageBreakPattern.test(html);
 
@@ -214,7 +341,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
       const parts = html.split(pageBreakPattern);
       const pages: string[] = [];
 
-      parts.forEach((part, index) => {
+      parts.forEach((part, _) => {
         if (part.trim()) {
           pages.push(part.trim());
         }
@@ -227,58 +354,54 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
 
       return pages;
     } else {
-      // Comportement par défaut si pas de sauts de page explicites
-      if (numPages <= 1) {
-        return [html];
-      }
-
-      // Diviser le HTML en pages égales
-      const lines = html.split('\n');
-      const linesPerPage = Math.ceil(lines.length / numPages);
-      const pages: string[] = [];
-
-      for (let i = 0; i < numPages; i++) {
-        const start = i * linesPerPage;
-        const end = Math.min(start + linesPerPage, lines.length);
-        const pageLines = lines.slice(start, end);
-
-        if (pageLines.length > 0) {
-          pages.push(pageLines.join('\n'));
-        }
-      }
-
-      // S'assurer qu'on a le bon nombre de pages
-      while (pages.length < numPages) {
-        pages.push('<div style="min-height: 200px; padding: 20px; border: 1px dashed #ccc;">Page vide</div>');
-      }
-
-      return pages.slice(0, numPages);
+      // Pas de sauts de page explicites - tout mettre sur une seule page
+      return [html];
     }
   };
 
-  const pageContents = processedHTML ? splitContentByPages(processedHTML, totalPages) : [''];
+  const pageContents = processedHTML ? splitContentByPages(processedHTML) : [''];
 
   const renderSinglePage = () => {
     const currentContent = pageContents[currentPage - 1] || processedHTML || '';
 
     return (
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', marginBottom: totalPages > 1 ? '10px' : '0' }}>
         <div style={contentStyle}>
-          <div
-            dangerouslySetInnerHTML={{ __html: currentContent }}
-          />
-        </div>
+          {/* Header avec contrôles de pagination intégrés */}
+          <div style={{
+            position: 'absolute',
+            top: '0mm',
+            left: '0mm',
+            right: '0mm',
+            height: '12mm', // Augmenter la hauteur pour les contrôles
+            backgroundColor: '#f8fafc',
+            zIndex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '0 5mm',
+            borderBottom: '1px solid #e5e7eb'
+          }}>
+            {/* Header sans contrôle de pagination - le contrôle est géré à l'extérieur */}
+            <div style={{
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#374151'
+            }}>
+              Page {currentPage} / {totalPages}
+            </div>
+          </div>
 
-        {/* Numéro de page dans le pied de page */}
-        <div style={{
-          position: 'absolute',
-          bottom: '10mm',
-          right: '20mm',
-          fontSize: '12px',
-          color: isDarkMode ? '#64748b' : '#9ca3af',
-          fontStyle: 'italic'
-        }}>
-          Page {currentPage} / {totalPages}
+          {/* Contenu principal - hauteur limitée pour protéger le header */}
+          <div style={{
+            height: 'calc(100% - 25mm)', // Hauteur ajustée pour le header plus grand
+            overflow: 'hidden',
+            paddingTop: '25mm' // Espace pour le header plus grand
+          }}>
+            <div
+              dangerouslySetInnerHTML={{ __html: currentContent }}
+            />
+          </div>
         </div>
       </div>
     );
@@ -294,9 +417,44 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
         <div key={i} style={{ position: 'relative', marginBottom: i < totalPages - 1 ? '20px' : '0' }}>
           {/* Page A4 */}
           <div style={contentStyle}>
-            <div
-              dangerouslySetInnerHTML={{ __html: pageContent }}
-            />
+            {/* Header avec numéro de page (lecture seule pour mode "tout afficher") */}
+            <div style={{
+              position: 'absolute',
+              top: '0mm',
+              left: '0mm',
+              right: '0mm',
+              height: '12mm', // Hauteur réduite pour le header en mode tout afficher
+              backgroundColor: '#f8fafc',
+              zIndex: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderBottom: '1px solid #e5e7eb'
+            }}>
+              <span style={{
+                fontSize: '12px',
+                color: '#374151',
+                fontWeight: '600',
+                padding: '3px 10px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                border: '1px solid #d1d5db',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+              }}>
+                Page {i + 1} / {totalPages}
+              </span>
+            </div>
+
+            {/* Contenu principal - hauteur limitée pour protéger le header */}
+            <div style={{
+              height: 'calc(100% - 12mm)', // Hauteur fixe pour laisser la place au header
+              overflow: 'hidden',
+              paddingTop: '12mm' // Espace pour le header
+            }}>
+              <div
+                dangerouslySetInnerHTML={{ __html: pageContent }}
+              />
+            </div>
           </div>
 
           {/* Séparateur de page */}
@@ -311,166 +469,63 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
-            }}>
-              <div style={{
-                backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc',
-                padding: '0 12px',
-                fontSize: '11px',
-                color: isDarkMode ? '#64748b' : '#9ca3af',
-                border: `1px solid ${isDarkMode ? '#475569' : '#d1d5db'}`,
-                borderRadius: '12px'
-              }}>
-                Page {i + 1} / {totalPages}
-              </div>
+            }}>              
             </div>
           )}
         </div>
       );
     }
-
     return pages;
   };
 
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: '16px',
-        marginTop: '20px',
-        padding: '16px',
-        backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
-        borderRadius: '12px',
-        border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`
-      }}>
-        <button
-          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 12px',
-            backgroundColor: currentPage === 1
-              ? (isDarkMode ? '#374151' : '#e5e7eb')
-              : (isDarkMode ? '#3b82f6' : '#2563eb'),
-            border: 'none',
-            borderRadius: '8px',
-            color: currentPage === 1
-              ? (isDarkMode ? '#6b7280' : '#9ca3af')
-              : '#ffffff',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
-          Précédent
-        </button>
-
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <span style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            color: isDarkMode ? '#f1f5f9' : '#1e293b'
-          }}>
-            Page {currentPage} / {totalPages}
-          </span>
-        </div>
-
-        <button
-          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 12px',
-            backgroundColor: currentPage === totalPages
-              ? (isDarkMode ? '#374151' : '#e5e7eb')
-              : (isDarkMode ? '#3b82f6' : '#2563eb'),
-            border: 'none',
-            borderRadius: '8px',
-            color: currentPage === totalPages
-              ? (isDarkMode ? '#6b7280' : '#9ca3af')
-              : '#ffffff',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          Suivant
-          <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
-        </button>
-
-        {/* Bouton pour changer de mode de vue */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginLeft: '16px',
-          paddingLeft: '16px',
-          borderLeft: `1px solid ${isDarkMode ? '#475569' : '#d1d5db'}`
-        }}>
-          <button
-            onClick={() => setViewMode(viewMode === 'single' ? 'all' : 'single')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              backgroundColor: isDarkMode ? '#374151' : '#f1f5f9',
-              border: `1px solid ${isDarkMode ? '#4b5563' : '#d1d5db'}`,
-              borderRadius: '6px',
-              color: isDarkMode ? '#f1f5f9' : '#374151',
-              fontSize: '12px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {viewMode === 'single' ? 'Voir tout' : 'Vue page'}
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div style={previewStyle}>
-      <div style={headerStyle}>
-        <h3 style={titleStyle}>
-          <EyeIcon style={{ width: '18px', height: '18px' }} />
-          Aperçu PDF
-        </h3>
+    <div style={previewStyle} className="preview-container">
         <div style={{
-          fontSize: '12px',
-          color: isDarkMode ? '#64748b' : '#6b7280',
+          ...headerStyle,
           display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
-          <span>Format: A4 (210×297mm)</span>
-          <span>•</span>
-          <span>{totalPages} page{totalPages > 1 ? 's' : ''}</span>
-          <span>•</span>
-          <span>Thème: {previewTheme}</span>
-          <span>•</span>
-          <span>{previewZoom}%</span>
+          <h3 style={titleStyle}>
+            <EyeIcon style={{ width: '18px', height: '18px' }} />
+            Aperçu PDF
+          </h3>
+          <div style={{
+            fontSize: '12px',
+            color: isDarkMode ? '#64748b' : '#6b7280',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span>Format: A4 (210×297mm)</span>
+            <span>•</span>
+            <span>{totalPages} page{totalPages > 1 ? 's' : ''}</span>
+            <span>•</span>
+            <span>Thème: {previewTheme}</span>
+            <span>•</span>
+            <span>{previewZoom}%</span>
+          </div>
         </div>
-      </div>
 
       {/* Pagination en haut */}
-      {renderPagination()}
+      <div style={{
+        backgroundColor: 'transparent',
+        padding: '8px 0',
+        marginBottom: '12px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          viewMode={viewMode}
+          setCurrentPage={setCurrentPage}
+          onViewModeChange={onViewModeChange}
+          isDarkMode={isDarkMode}
+        />
+      </div>
 
       <div ref={ref} style={contentWrapperStyle}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

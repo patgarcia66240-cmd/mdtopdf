@@ -93,7 +93,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
   const statNumberStyle = {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#3b82f6',
+    color: '#6b7280',
     marginBottom: '4px'
   };
 
@@ -118,7 +118,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
     {
       icon: <DocumentArrowDownIcon style={{ width: '20px', height: '20px' }} />,
       label: 'Exporter en PDF (HD)',
-      gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+      gradient: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
       onClick: onExportPDF
     },
     {

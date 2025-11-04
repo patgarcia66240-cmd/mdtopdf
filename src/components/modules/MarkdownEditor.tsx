@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { PencilIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { marked } from 'marked';
+import MarkdownToolbar from './MarkdownToolbar';
 
 interface MarkdownEditorProps {
   markdown: string;
@@ -17,49 +18,73 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   onTogglePreview,
   isDarkMode
 }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Style A4 pour simuler une page PDF - Ratio A4 conservé avec aspect-ratio
+  const a4ContainerStyle: React.CSSProperties = {
+    width: '100%', // Largeur fluide
+    aspectRatio: '210/297', // Ratio A4 (210mm x 297mm)
+    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+    border: `2px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+    borderRadius: '8px',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    overflow: 'hidden',
+    position: 'relative',
+    boxSizing: 'border-box',
+    minHeight: '400px' // Hauteur minimale pour lisibilité
+  };
+
   const editorStyle = {
     display: 'grid',
     gridTemplateColumns: showPreview ? '1fr 1fr' : '1fr',
     gap: '16px',
-    height: '500px'
+    height: '100%'
+  };
+
+  const editorContainerStyle = {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    height: '100%',
+    padding: '0px' // Alignement avec le header (24px de padding horizontal)
   };
 
   const textareaStyle = {
     width: '100%',
     height: '100%',
-    padding: '16px',
-    border: `2px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
-    borderRadius: '8px',
-    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+    padding: '5mm 15mm', // Marges A4 standard (20mm haut/bas, 15mm gauche/droite)
+    border: 'none',
+    backgroundColor: 'transparent',
     color: isDarkMode ? '#f9fafb' : '#111827',
-    fontSize: '14px',
+    fontSize: '12px', // Police plus petite pour A4
     fontFamily: 'monospace',
     resize: 'none' as const,
     outline: 'none',
     transition: 'all 0.2s ease',
     whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-    lineHeight: '1.6'
+    wordBreak: 'break-word' as const,
+    lineHeight: '1.5',
+    boxSizing: 'border-box' as const
   };
 
   const previewStyle = {
     width: '100%',
     height: '100%',
-    padding: '16px',
-    border: `2px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
-    borderRadius: '8px',
-    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+    padding: '20mm 15mm', // Marges A4 standard
+    border: 'none',
+    backgroundColor: 'transparent',
     color: isDarkMode ? '#f9fafb' : '#111827',
     overflow: 'auto',
-    fontSize: '14px',
-    lineHeight: '1.6'
+    fontSize: '12px', // Police plus petite pour A4
+    lineHeight: '1.5',
+    boxSizing: 'border-box' as const
   };
 
   const headerStyle = {
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    marginBottom: '16px'
+    marginBottom: '16px',
+    padding: '0' // Plus de padding pour aligner sur le bord gauche
   };
 
   const buttonStyle = {
@@ -114,8 +139,37 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     }
   };
 
+  const insertText = (text: string, replaceSelection = false) => {
+    if (!textareaRef.current) return;
+
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    let newValue: string;
+    let newPosition: number;
+
+    if (replaceSelection && start !== end) {
+      // Remplacer la sélection
+      newValue = markdown.substring(0, start) + text + markdown.substring(end);
+      newPosition = start + text.length;
+    } else {
+      // Insérer à la position du curseur
+      newValue = markdown.substring(0, start) + text + markdown.substring(end);
+      newPosition = start + text.length;
+    }
+
+    onChange(newValue);
+
+    // Repositionner le curseur
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = newPosition;
+    }, 0);
+  };
+
   return (
-    <div>
+    <div style={editorContainerStyle}>
       <div style={headerStyle}>
         <h3 style={{
           margin: 0,
@@ -129,34 +183,37 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           <PencilIcon style={{ width: '18px', height: '18px' }} />
           Éditeur Markdown
         </h3>
-        <button
-          onClick={onTogglePreview}
-          style={buttonStyle}
-          onMouseEnter={handleButtonHover}
-          onMouseLeave={handleButtonLeave}
-        >
-          <EyeIcon style={{ width: '16px', height: '16px' }} />
-          {showPreview ? 'Masquer' : 'Afficher'} l'aperçu
-        </button>
       </div>
 
-      <div style={editorStyle}>
-        <textarea
-          value={markdown}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={handleTextareaFocus}
-          onBlur={handleTextareaBlur}
-          placeholder="# Entrez votre contenu Markdown ici..."
-          style={textareaStyle}
-        />
+      {/* Toolbar */}
+      <MarkdownToolbar
+        onInsertText={insertText}
+        onTogglePreview={onTogglePreview}
+        showPreview={showPreview}
+        isDarkMode={isDarkMode}
+      />
 
-        {showPreview && (
-          <div
-            style={previewStyle}
-            dangerouslySetInnerHTML={{ __html: marked(markdown) }}
+      {/* Conteneur A4 */}
+      <div style={a4ContainerStyle}>
+        <div style={editorStyle}>
+          <textarea
+            ref={textareaRef}
+            value={markdown}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={handleTextareaFocus}
+            onBlur={handleTextareaBlur}
+            placeholder="# Entrez votre contenu Markdown ici..."
+            style={textareaStyle}
           />
-        )}
+
+          {showPreview && (
+            <div
+              style={previewStyle}
+              dangerouslySetInnerHTML={{ __html: marked(markdown) }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

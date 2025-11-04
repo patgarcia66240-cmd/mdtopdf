@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SparklesIcon, PlusIcon } from '@heroicons/react/24/outline';
+import TemplateManager from './TemplateManager';
 
 interface Template {
   id: string;
@@ -8,6 +9,8 @@ interface Template {
   colors: string[];
   isPro: boolean;
   category: 'modern' | 'classic' | 'academic' | 'creative';
+  content?: string;
+  style?: any;
 }
 
 interface TemplateSelectorProps {
@@ -16,6 +19,7 @@ interface TemplateSelectorProps {
   onTemplateSelect: (templateId: string) => void;
   onCreateTemplate: () => void;
   isDarkMode: boolean;
+  onApplyTemplate?: (content: string, style?: any) => void;
 }
 
 const TemplateSelector: React.FC<TemplateSelectorProps> = ({
@@ -23,8 +27,11 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   selectedTemplate,
   onTemplateSelect,
   onCreateTemplate,
-  isDarkMode
+  isDarkMode,
+  onApplyTemplate
 }) => {
+  const [showManager, setShowManager] = useState(false);
+  const [customTemplates, setCustomTemplates] = useState<any[]>([]);
   const panelStyle = {
     backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     padding: '24px',
@@ -57,13 +64,13 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
   const templateCardStyle = (isSelected: boolean, isPro: boolean) => ({
     backgroundColor: isSelected ? (isDarkMode ? '#1e3a5f' : '#eff6ff') : (isDarkMode ? '#0f172a' : '#ffffff'),
-    border: isSelected ? '2px solid #3b82f6' : `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`,
+    border: isSelected ? '2px solid #6b7280' : `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`,
     borderRadius: '12px',
     padding: '20px',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     position: 'relative' as const,
-    boxShadow: isSelected ? '0 4px 12px rgba(59, 130, 246, 0.15)' : '0 2px 8px rgba(0, 0, 0, 0.05)'
+    boxShadow: isSelected ? '0 4px 12px rgba(107, 114, 128, 0.15)' : '0 2px 8px rgba(0, 0, 0, 0.05)'
   });
 
   const badgeStyle = (isPro: boolean) => ({
@@ -123,6 +130,12 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
   const handleCardClick = (templateId: string) => {
     onTemplateSelect(templateId);
+
+    // Si le template a du contenu, l'appliquer
+    const template = templates.find(t => t.id === templateId);
+    if (template?.content && onApplyTemplate) {
+      onApplyTemplate(template.content, template.style);
+    }
   };
 
   const handleCardHover = (e: React.MouseEvent<HTMLDivElement>, isSelected: boolean) => {
@@ -149,6 +162,49 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     e.currentTarget.style.borderColor = isDarkMode ? '#4b5563' : '#d1d5db';
   };
 
+  const handleCreateTemplate = () => {
+    setShowManager(true);
+  };
+
+  const handleTemplateSelect = (template: any) => {
+    if (onApplyTemplate) {
+      onApplyTemplate(template.content, template.style);
+    }
+  };
+
+  const handleTemplateCreate = (template: any) => {
+    const newTemplate = {
+      id: `custom-${Date.now()}`,
+      ...template,
+      isPro: false,
+      colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+    };
+    setCustomTemplates([...customTemplates, newTemplate]);
+  };
+
+  const handleTemplateUpdate = (id: string, updates: any) => {
+    setCustomTemplates(customTemplates.map(t =>
+      t.id === id ? { ...t, ...updates } : t
+    ));
+  };
+
+  const handleTemplateDelete = (id: string) => {
+    setCustomTemplates(customTemplates.filter(t => t.id !== id));
+  };
+
+  if (showManager) {
+    return (
+      <TemplateManager
+        templates={customTemplates}
+        onTemplateSelect={handleTemplateSelect}
+        onTemplateCreate={handleTemplateCreate}
+        onTemplateUpdate={handleTemplateUpdate}
+        onTemplateDelete={handleTemplateDelete}
+        isDarkMode={isDarkMode}
+      />
+    );
+  }
+
   return (
     <div style={panelStyle}>
       <div style={headerStyle}>
@@ -159,7 +215,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       </div>
 
       <div style={gridStyle}>
-        {templates.map((template) => (
+        {[...templates, ...customTemplates].map((template) => (
           <div
             key={template.id}
             style={templateCardStyle(selectedTemplate === template.id, template.isPro)}
@@ -172,7 +228,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             </span>
 
             <div style={colorPreviewStyle}>
-              {template.colors.map((color, index) => (
+              {template.colors.map((color: string, index: number) => (
                 <div
                   key={index}
                   style={{
@@ -189,13 +245,13 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         ))}
 
         <button
-          onClick={onCreateTemplate}
+          onClick={handleCreateTemplate}
           style={createButtonStyle}
           onMouseEnter={handleCreateHover}
           onMouseLeave={handleCreateLeave}
         >
           <PlusIcon style={{ width: '18px', height: '18px' }} />
-          Créer un template personnalisé
+          Gestion des templates
         </button>
       </div>
     </div>

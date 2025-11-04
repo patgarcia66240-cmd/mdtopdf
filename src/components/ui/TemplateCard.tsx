@@ -21,13 +21,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
 }) => {
   const cardStyle = {
     backgroundColor: isSelected ? '#f8fafc' : '#ffffff',
-    border: isSelected ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+    border: isSelected ? '2px solid #6b7280' : '1px solid #e2e8f0',
     borderRadius: '16px',
     padding: '24px',
     marginBottom: '16px',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    boxShadow: isSelected ? '0 4px 20px rgba(59, 130, 246, 0.15)' : '0 2px 8px rgba(0, 0, 0, 0.06)',
+    boxShadow: isSelected ? '0 4px 20px rgba(107, 114, 128, 0.15)' : '0 2px 8px rgba(0, 0, 0, 0.06)',
     position: 'relative' as const
   };
 
@@ -111,18 +111,18 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
 
   const handleCardHover = (e: React.MouseEvent<HTMLDivElement>) => {
     e.currentTarget.style.transform = 'translateY(-2px)';
-    e.currentTarget.style.boxShadow = isSelected ? '0 6px 25px rgba(59, 130, 246, 0.2)' : '0 4px 16px rgba(0, 0, 0, 0.1)';
+    e.currentTarget.style.boxShadow = isSelected ? '0 6px 25px rgba(107, 114, 128, 0.2)' : '0 4px 16px rgba(0, 0, 0, 0.1)';
   };
 
   const handleCardLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     e.currentTarget.style.transform = 'translateY(0)';
-    e.currentTarget.style.boxShadow = isSelected ? '0 4px 20px rgba(59, 130, 246, 0.15)' : '0 2px 8px rgba(0, 0, 0, 0.06)';
+    e.currentTarget.style.boxShadow = isSelected ? '0 4px 20px rgba(107, 114, 128, 0.15)' : '0 2px 8px rgba(0, 0, 0, 0.06)';
   };
 
   const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.backgroundColor = '#f8fafc';
-    e.currentTarget.style.borderColor = '#3b82f6';
-    e.currentTarget.style.color = '#3b82f6';
+    e.currentTarget.style.backgroundColor = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+    e.currentTarget.style.borderColor = '#6b7280';
+    e.currentTarget.style.color = '#ffffff';
   };
 
   const handleButtonLeave = (e: React.MouseEvent<HTMLButtonElement>) => {

@@ -1,7 +1,8 @@
 import React from 'react';
-import { Cog6ToothIcon, SwatchIcon, MagnifyingGlassIcon, MinusIcon, PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, SwatchIcon, MagnifyingGlassIcon, MinusIcon, PlusIcon, ArrowPathIcon, DocumentTextIcon, PhotoIcon, ArrowsPointingOutIcon, AdjustmentsHorizontalIcon, SparklesIcon, BookOpenIcon, AcademicCapIcon, CircleStackIcon } from '@heroicons/react/24/outline';
 import FileNameInput from '../ui/FileNameInput';
 import { PDFOptions } from '../../types/app';
+import { display } from 'html2canvas/dist/types/css/property-descriptors/display';
 
 interface PDFControlPanelProps {
   pdfOptions: PDFOptions;
@@ -9,11 +10,13 @@ interface PDFControlPanelProps {
   fileName: string;
   onFileNameChange: (name: string) => void;
   onExportPDF: () => void;
+  onExportChange?: (format: string) => void;
   previewTheme: string;
   onThemeChange: (theme: string) => void;
   previewZoom: number;
   onZoomChange: (zoom: number) => void;
   isDarkMode: boolean;
+  exportFormat?: string;
 }
 
 const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
@@ -22,11 +25,13 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
   fileName,
   onFileNameChange,
   onExportPDF,
+  onExportChange,
   previewTheme,
   onThemeChange,
   previewZoom,
   onZoomChange,
-  isDarkMode
+  isDarkMode,
+  exportFormat = "pdf"
 }) => {
   const panelStyle = {
     backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
@@ -37,15 +42,8 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
   };
 
   const sectionStyle = {
-    marginBottom: '20px'
-  };
-
-  const labelStyle = {
-    display: 'block',
-    marginBottom: '8px',
-    fontSize: '13px',
-    fontWeight: '600',
-    color: isDarkMode ? '#94a3b8' : '#64748b'
+    display:'flex',
+    marginBottom: '16px'
   };
 
   const selectStyle = {
@@ -69,10 +67,26 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
   };
 
   const themes = [
-    { key: 'modern', label: 'Moderne', icon: '✨' },
-    { key: 'classic', label: 'Classique', icon: '📜' },
-    { key: 'academic', label: 'Académique', icon: '🎓' },
-    { key: 'minimal', label: 'Minimal', icon: '⚪' }
+    {
+      key: 'modern',
+      label: 'Moderne',
+      icon: <SparklesIcon style={{ width: '14px', height: '14px' }} />
+    },
+    {
+      key: 'classic',
+      label: 'Classique',
+      icon: <BookOpenIcon style={{ width: '14px', height: '14px' }} />
+    },
+    {
+      key: 'academic',
+      label: 'Académique',
+      icon: <AcademicCapIcon style={{ width: '14px', height: '14px' }} />
+    },
+    {
+      key: 'minimal',
+      label: 'Minimal',
+      icon: <CircleStackIcon style={{ width: '14px', height: '14px' }} />
+    }
   ];
 
   const updateOption = (key: keyof PDFOptions, value: any) => {
@@ -101,46 +115,97 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
           onChange={onFileNameChange}
           placeholder="document"
           isDarkMode={isDarkMode}
-          buttonText="Exporter en PDF"
+          buttonText="Exporter"
           onButtonClick={onExportPDF}
+          onFormatChange={onExportChange}
+          defaultFormat={exportFormat}
           showIcon={true}
         />
       </div>
 
-      {/* Options de format */}
+      {/* Options de format et mise en page */}
       <div style={sectionStyle}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-          <div>
-            <label style={labelStyle}>Format</label>
+        <div style={{
+          display: 'flex',
+          gap: '12px',
+          alignItems: 'center',
+          padding: '6px 10px',
+          border: `1px solid ${isDarkMode ? '#475569' : '#d1d5db'}`,
+          borderRadius: '8px',
+          backgroundColor: isDarkMode ? '#0f172a' : '#ffffff'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            minWidth: '100px'
+          }}>
+            <DocumentTextIcon style={{
+              width: '14px',
+              height: '14px',
+              color: isDarkMode ? '#94a3b8' : '#64748b'
+            }} />
             <select
               value={pdfOptions.format}
               onChange={(e) => updateOption('format', e.target.value)}
-              style={selectStyle}
+              style={{
+                ...selectStyle,
+                padding: '2px 6px',
+                fontSize: '11px',
+                border: '1px solid ' + (isDarkMode ? '#334155' : '#e2e8f0'),
+                backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
+                width: '50px',
+                height: '24px',
+                borderRadius: '4px'
+              }}
             >
               <option value="a4">A4</option>
               <option value="letter">Letter</option>
               <option value="legal">Legal</option>
             </select>
           </div>
-          <div>
-            <label style={labelStyle}>Orientation</label>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            minWidth: '110px'
+          }}>
+            <PhotoIcon style={{
+              width: '14px',
+              height: '14px',
+              color: isDarkMode ? '#94a3b8' : '#64748b'
+            }} />
             <select
               value={pdfOptions.orientation}
               onChange={(e) => updateOption('orientation', e.target.value)}
-              style={selectStyle}
+              style={{
+                ...selectStyle,
+                padding: '2px 6px',
+                fontSize: '11px',
+                border: '1px solid ' + (isDarkMode ? '#334155' : '#e2e8f0'),
+                backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
+                width: '70px',
+                height: '24px',
+                borderRadius: '4px'
+              }}
             >
               <option value="portrait">Portrait</option>
               <option value="landscape">Paysage</option>
             </select>
           </div>
-        </div>
-      </div>
 
-      {/* Options de mise en page */}
-      <div style={sectionStyle}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-          <div>
-            <label style={labelStyle}>Marges (mm)</label>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            minWidth: '80px'
+          }}>
+            <ArrowsPointingOutIcon style={{
+              width: '14px',
+              height: '14px',
+              color: isDarkMode ? '#94a3b8' : '#64748b'
+            }} />
             <input
               type="number"
               value={pdfOptions.margins.top}
@@ -153,32 +218,90 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
               })}
               min="5"
               max="50"
-              style={inputStyle}
+              placeholder="Marge"
+              style={{
+                ...inputStyle,
+                padding: '2px 6px',
+                fontSize: '11px',
+                border: '1px solid ' + (isDarkMode ? '#334155' : '#e2e8f0'),
+                backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
+                width: '40px',
+                height: '24px',
+                borderRadius: '4px'
+              }}
             />
+            <span style={{
+              fontSize: '10px',
+              color: isDarkMode ? '#64748b' : '#94a3b8'
+            }}>
+              mm
+            </span>
           </div>
-          <div>
-            <label style={labelStyle}>Taille police</label>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            minWidth: '75px'
+          }}>
+            <AdjustmentsHorizontalIcon style={{
+              width: '14px',
+              height: '14px',
+              color: isDarkMode ? '#94a3b8' : '#64748b'
+            }} />
             <input
               type="number"
               value={pdfOptions.fontSize}
               onChange={(e) => updateOption('fontSize', parseInt(e.target.value))}
               min="8"
               max="24"
-              style={inputStyle}
+              placeholder="Police"
+              style={{
+                ...inputStyle,
+                padding: '2px 6px',
+                fontSize: '11px',
+                border: '1px solid ' + (isDarkMode ? '#334155' : '#e2e8f0'),
+                backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
+                width: '35px',
+                height: '24px',
+                borderRadius: '4px'
+              }}
             />
+            <span style={{
+              fontSize: '10px',
+              color: isDarkMode ? '#64748b' : '#94a3b8'
+            }}>
+              pt
+            </span>
           </div>
         </div>
       </div>
 
       {/* Thème de l'aperçu */}
       <div style={sectionStyle}>
-        <label style={labelStyle}>
-          <SwatchIcon style={{ width: '14px', height: '14px', marginRight: '6px', verticalAlign: 'middle' }} />
-          Thème de l'aperçu
-        </label>
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          display: 'flex',
+          alignItems: 'center',
+          marginRight: '8px'
+        }}>
+          <SwatchIcon style={{
+            width: '14px',
+            height: '14px',
+            color: isDarkMode ? '#94a3b8' : '#64748b',
+            flexShrink: 0,
+          marginRight: '2px'
+
+          }} />
+          <span style={{
+            fontSize: '13px',
+            fontWeight: '600',
+            color: isDarkMode ? '#94a3b8' : '#64748b'
+          }}>
+            Thème de l'aperçu
+          </span>
+        </div>
+        <div style={{
+          display: 'flex',
           gap: '8px'
         }}>
           {themes.map((theme) => (
@@ -186,13 +309,17 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
               key={theme.key}
               onClick={() => onThemeChange(theme.key)}
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                flex: 1,
                 padding: '8px 12px',
                 border: '1px solid ' + (previewTheme === theme.key
-                  ? (isDarkMode ? '#3b82f6' : '#2563eb')
+                  ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
                   : (isDarkMode ? '#475569' : '#d1d5db')),
                 borderRadius: '8px',
                 background: previewTheme === theme.key
-                  ? (isDarkMode ? '#3b82f6' : '#2563eb')
+                  ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
                   : (isDarkMode ? '#0f172a' : '#ffffff'),
                 color: previewTheme === theme.key
                   ? '#ffffff'
@@ -200,10 +327,18 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
                 fontSize: '11px',
                 fontWeight: previewTheme === theme.key ? '600' : '500',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                justifyContent: 'center'
               }}
             >
-              {theme.icon} {theme.label}
+              <span style={{
+                color: previewTheme === theme.key
+                  ? '#ffffff'
+                  : (isDarkMode ? '#94a3b8' : '#64748b')
+              }}>
+                {theme.icon}
+              </span>
+              {theme.label}
             </button>
           ))}
         </div>
@@ -254,11 +389,27 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
               onChange={(e) => onZoomChange(parseInt(e.target.value))}
               style={{
                 flex: 1,
-                height: '4px',
+                height: '3px',
                 borderRadius: '2px',
-                background: isDarkMode ? '#475569' : '#d1d5db',
+                background: '#6b7280',
                 outline: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                opacity: 0.8,
+                transition: 'all 0.2s ease',
+                WebkitAppearance: 'none',
+                appearance: 'none',
+                borderWidth: '0',
+                borderColor: 'transparent',
+                color: '#6b7280',
+                accentColor: '#6b7280'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '1';
+                e.currentTarget.style.transform = 'scaleY(1.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '0.8';
+                e.currentTarget.style.transform = 'scaleY(1)';
               }}
             />
             <button

@@ -4,56 +4,153 @@ import { PDFOptions, Template, RecentFile } from '@/types/app';
 
 export class PDFService {
   async generatePDF(markdown: string, options: PDFOptions): Promise<Blob> {
-    // Convertir markdown en HTML (implémentation simplifiée pour l'instant)
-    const html = await this.convertMarkdownToHTML(markdown, options);
+    // Importer marked pour la conversion markdown
+    const { marked } = await import('marked');
 
-    // Créer un élément temporaire
-    const element = document.createElement('div');
-    element.innerHTML = html;
-    element.style.width = '800px';
-    element.style.fontFamily = options.fontFamily;
-    element.style.fontSize = `${options.fontSize}px`;
-    element.style.padding = `${options.margins.top}px ${options.margins.right}px ${options.margins.bottom}px ${options.margins.left}px`;
-    document.body.appendChild(element);
+    // Traiter les sauts de page AVANT la conversion markdown
+    let processedMarkdown = markdown;
+    processedMarkdown = processedMarkdown.replace(/<!--\s*pagebreak\s*-->|<!--\s*newpage\s*-->/gi, '\n<!--PAGEBREAK-->\n');
+    processedMarkdown = processedMarkdown.replace(/\\pagebreak|\\newpage/gi, '\n<!--PAGEBREAK-->\n');
 
-    try {
-      // Convertir en canvas
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
+    // Configuration de marked
+    const markedOptions = {
+      breaks: true,
+      gfm: true,
+      sanitize: false,
+      pedantic: false,
+      smartLists: true,
+      smartypants: false,
+      mangle: false,
+      headerIds: false
+    };
+
+    let html = await marked(processedMarkdown, markedOptions);
+
+    // Remplacer les marqueurs de saut de page par des divs avec style CSS
+    html = html.replace(/<!--PAGEBREAK-->/gi, '<div style="page-break-before: always; clear: both;"></div>');
+
+    // Améliorer le style HTML avec les options
+    html = this.enhanceHTMLWithStyles(html, options);
+
+    // Diviser le contenu en pages selon les sauts de page
+    const pages = this.splitContentIntoPages(html);
+
+    // Générer le PDF avec plusieurs pages
+    return await this.generateMultiPagePDF(pages, options);
+  }
+
+  private splitContentIntoPages(html: string): string[] {
+    // Chercher les divs de saut de page
+    const pageBreakPattern = /<div[^>]*style="[^"]*page-break-before:\s*always[^"]*"[^>]*><\/div>/gi;
+    const hasPageBreaks = pageBreakPattern.test(html);
+
+    if (hasPageBreaks) {
+      // Utiliser les sauts de page explicites
+      const parts = html.split(pageBreakPattern);
+      const pages: string[] = [];
+
+      parts.forEach((part, _) => {
+        if (part.trim()) {
+          pages.push(part.trim());
+        }
       });
 
-      // Générer le PDF
-      const pdf = new jsPDF({
-        orientation: options.orientation,
-        unit: 'mm',
-        format: options.format,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const imgWidth = options.format === 'a4' ? 210 : 216; // mm
-      const pageHeight = options.format === 'a4' ? 297 : 279; // mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      // Si on n'a pas trouvé de contenu valide, retourner le HTML complet
+      if (pages.length === 0) {
+        return [html];
       }
 
-      return pdf.output('blob');
-    } finally {
-      document.body.removeChild(element);
+      return pages;
+    } else {
+      // Si pas de sauts de page explicites, retourner une seule page
+      return [html];
     }
+  }
+
+  private async generateMultiPagePDF(pages: string[], options: PDFOptions): Promise<Blob> {
+    const pdf = new jsPDF({
+      orientation: options.orientation,
+      unit: 'mm',
+      format: options.format,
+    });
+
+    // Dimensions pour A4 avec marges ajustées
+    const pageWidth = options.format === 'a4' ? 210 : 216; // mm
+    const pageHeight = options.format === 'a4' ? 297 : 279; // mm
+    const marginLeft = 20; // marge gauche en mm
+    const marginRight = 20; // marge droite en mm
+    const marginTop = 0; // marge haut en mm
+    const marginBottom = 30; // marge bas en mm pour éviter le texte sous le footer
+    const contentWidth = pageWidth - (marginLeft + marginRight);
+    const contentHeight = pageHeight - (marginTop + marginBottom);
+
+    for (let i = 0; i < pages.length; i++) {
+      if (i > 0) {
+        pdf.addPage();
+      }
+
+      // Créer un conteneur principal pour la page avec dimensions A4 exactes
+      const pageContainer = document.createElement('div');
+      pageContainer.style.position = 'relative';
+      pageContainer.style.width = '794px'; // Exactement 210mm A4 à 96dpi
+      pageContainer.style.height = '1123px'; // Exactement 297mm A4 à 96dpi
+      pageContainer.style.backgroundColor = '#ffffff';
+
+      // Créer le conteneur de contenu - utiliser les mêmes marges que l'aperçu
+      const contentElement = document.createElement('div');
+      contentElement.innerHTML = pages[i];
+      contentElement.style.position = 'absolute';
+      contentElement.style.top = '0';
+      contentElement.style.left = '0';
+      contentElement.style.right = '0';
+      contentElement.style.height = '100%'; // Utiliser toute la hauteur - pas de footer
+      contentElement.style.fontFamily = options.fontFamily;
+      contentElement.style.fontSize = `${options.fontSize}px`;
+      contentElement.style.padding = '0px 76px 10px 76px'; // 0mm haut, 20mm côtés, 2.5mm bas, 20mm gauche (en pixels à 96dpi)
+      contentElement.style.overflow = 'hidden'; // Couper strictement ce qui dépasse
+      contentElement.style.boxSizing = 'border-box';
+
+      // Assembler la page - PAS DE FOOTER pour un rendu propre
+      pageContainer.appendChild(contentElement);
+      document.body.appendChild(pageContainer);
+
+      const element = pageContainer; // Utiliser le conteneur complet pour le rendu
+
+      try {
+        // Convertir cette page en canvas
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        // Calculer les dimensions pour que le contenu tienne sur la page
+        const imgWidth = contentWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Si l'image est trop grande pour la page, la réduire
+        let finalWidth = imgWidth;
+        let finalHeight = imgHeight;
+        let yPosition = marginTop;
+
+        if (imgHeight > contentHeight) {
+          finalHeight = contentHeight;
+          finalWidth = (canvas.width * finalHeight) / canvas.height;
+          yPosition = marginTop + (contentHeight - finalHeight) / 2; // Centrer verticalement
+        }
+
+        const xPosition = marginLeft + (contentWidth - finalWidth) / 2; // Centrer horizontalement
+
+        pdf.addImage(imgData, 'PNG', xPosition, yPosition, finalWidth, finalHeight);
+      } finally {
+        document.body.removeChild(element);
+      }
+    }
+
+    return pdf.output('blob');
   }
 
   async generatePDFPreview(markdown: string, options: PDFOptions): Promise<string> {
@@ -127,20 +224,38 @@ export class PDFService {
     localStorage.setItem('recent-files', JSON.stringify(updated));
   }
 
-  private async convertMarkdownToHTML(markdown: string, options: PDFOptions): Promise<string> {
-    // Implémentation basique - à remplacer par react-markdown server-side rendering
-    const html = markdown
-      .replace(/^# (.*$)/gim, '<h1 style="font-size: 2em; margin: 0.67em 0;">$1</h1>')
-      .replace(/^## (.*$)/gim, '<h2 style="font-size: 1.5em; margin: 0.75em 0;">$1</h2>')
-      .replace(/^### (.*$)/gim, '<h3 style="font-size: 1.17em; margin: 0.83em 0;">$1</h3>')
-      .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-      .replace(/\*(.*)\*/gim, '<em>$1</em>')
-      .replace(/^\* (.*)$/gim, '<li>$1</li>')
-      .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
-      .replace(/\n\n/g, '</p><p>')
-      .replace(/^(.*)$/gm, '<p>$1</p>');
+  private enhanceHTMLWithStyles(html: string, options: PDFOptions): string {
+    // Appliquer les styles de base en utilisant les options
+    const baseStyles = `
+      font-family: ${options.fontFamily || 'Inter'};
+      font-size: ${options.fontSize || 12}px;
+      line-height: 1.6;
+      color: #1e293b;
+      margin: 0;
+      padding: 0;
+    `;
 
-    return `<div style="font-family: ${options.fontFamily}; font-size: ${options.fontSize}px; line-height: 1.6;">${html}</div>`;
+    // Réinitialiser tous les styles CSS pour éviter les marges par défaut
+    let enhancedHTML = html
+      // Reset CSS agressif pour supprimer toutes les marges
+      .replace(/<h1([^>]*)>/g, `<h1$1 style="font-size: 2em; margin: 2px 0 2px 0; font-weight: 700; color: #1e293b; padding: 0;">`)
+      .replace(/<h2([^>]*)>/g, `<h2$1 style="font-size: 1.5em; margin: 2px 0 1px 0; font-weight: 600; color: #334155; padding: 0;">`)
+      .replace(/<h3([^>]*)>/g, `<h3$1 style="font-size: 1.17em; margin: 1px 0 1px 0; font-weight: 600; color: #475569; padding: 0;">`)
+      .replace(/<p([^>]*)>/g, `<p$1 style="margin: 1px 0; text-align: justify; padding: 0;">`)
+      .replace(/<strong([^>]*)>/g, `<strong$1 style="font-weight: 700; color: inherit;">`)
+      .replace(/<em([^>]*)>/g, `<em$1 style="font-style: italic; color: inherit;">`)
+      .replace(/<ul([^>]*)>/g, `<ul$1 style="margin: 0.5em 0; padding-left: 20px;">`)
+      .replace(/<ol([^>]*)>/g, `<ol$1 style="margin: 0.5em 0; padding-left: 20px;">`)
+      .replace(/<li([^>]*)>/g, `<li$1 style="margin: 0.25em 0;">`)
+      .replace(/<blockquote([^>]*)>/g, `<blockquote$1 style="border-left: 2px solid #d1d5db; margin: 1em 0; padding-left: 12px; font-style: italic; color: #6b7280;">`)
+      .replace(/<code([^>]*)>/g, `<code$1 style="background-color: #f8fafc; padding: 1px 3px; font-family: 'Courier New', monospace; font-size: 0.9em;">`)
+      .replace(/<pre([^>]*)>/g, `<pre$1 style="background-color: #f8fafc; padding: 8px; overflow-x: auto; margin: 1em 0; font-family: 'Courier New', monospace; font-size: 0.85em; line-height: 1.2;">`)
+      .replace(/<table([^>]*)>/g, `<table$1 style="width: 100%; margin: 1em 0;">`)
+      .replace(/<th([^>]*)>/g, `<th$1 style="padding: 6px 8px; background-color: #f9fafb; font-weight: 600; text-align: left;">`)
+      .replace(/<td([^>]*)>/g, `<td$1 style="padding: 6px 8px;">`);
+
+    // Envelopper le contenu dans un div avec les styles de base
+    return `<div style="${baseStyles}">${enhancedHTML}</div>`;
   }
 }
 

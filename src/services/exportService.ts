@@ -231,7 +231,6 @@ export class ExportService {
             background-color: ${styles.colors.background};
             margin: 0;
             padding: 20px;
-            max-width: 800px;
             margin: 0 auto;
         }
 

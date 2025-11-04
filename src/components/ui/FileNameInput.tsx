@@ -1,5 +1,5 @@
-import React from 'react';
-import { DocumentArrowDownIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+import { DocumentArrowDownIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface FileNameInputProps {
   value: string;
@@ -10,6 +10,8 @@ interface FileNameInputProps {
   buttonText?: string;
   onButtonClick?: () => void;
   showIcon?: boolean;
+  onFormatChange?: (format: string) => void;
+  defaultFormat?: string;
 }
 
 const FileNameInput: React.FC<FileNameInputProps> = ({
@@ -18,10 +20,25 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
   placeholder = "document",
   isDarkMode = false,
   label = "Nom du fichier d'export",
-  buttonText = "Valider",
+  buttonText = "Exporter",
   onButtonClick,
-  showIcon = true
+  showIcon = true,
+  onFormatChange,
+  defaultFormat = "pdf"
 }) => {
+  const [selectedFormat, setSelectedFormat] = useState(defaultFormat);
+
+  // Synchroniser le format local avec les changements externes
+  React.useEffect(() => {
+    setSelectedFormat(defaultFormat);
+  }, [defaultFormat]);
+  const [showFormatDropdown, setShowFormatDropdown] = useState(false);
+
+  const formats = [
+    { value: 'pdf', label: 'PDF' },
+    { value: 'md', label: 'MD' },
+    { value: 'html', label: 'HTML' }
+  ];
   const labelStyle = {
     display: 'block',
     marginBottom: '12px',
@@ -33,14 +50,60 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
   const containerStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'row',
-    gap: '12px',
+    gap: '6px',
     alignItems: 'center',
-    marginBottom: '16px'
+    marginBottom: '12px'
+  };
+
+  const formatButtonStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '6px 16px',
+    backgroundColor: isDarkMode ? '#374151' : '#f3f4f6',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '15px',
+    fontWeight: '500',
+    color: isDarkMode ? '#f9fafb' : '#374151',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    whiteSpace: 'nowrap' as const,
+    minWidth: '70px',
+    justifyContent: 'center'
+  };
+
+  const dropdownStyle: React.CSSProperties = {
+    position: 'absolute' as const,
+    top: '100%',
+    right: '0',
+    marginTop: '4px',
+    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+    border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+    borderRadius: '8px',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    zIndex: 50,
+    minWidth: '120px',
+    overflow: 'hidden'
+  };
+
+  const dropdownItemStyle = {
+    padding: '12px 16px',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: isDarkMode ? '#f9fafb' : '#111827',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    border: 'none',
+    backgroundColor: 'transparent',
+    width: '100%',
+    textAlign: 'left' as const,
+    display: 'block'
   };
 
   const inputStyle = {
     flex: 1,
-    padding: '12px 16px',
+    padding: '4px 16px',
     border: `2px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
     borderRadius: '8px',
     fontSize: '15px',
@@ -51,8 +114,8 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
   };
 
   const buttonStyle = {
-    padding: '12px 24px',
-    backgroundColor: isDarkMode ? '#3b82f6' : '#2563eb',
+    padding: '6px 24px',
+    background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
     border: 'none',
     borderRadius: '8px',
     fontSize: '15px',
@@ -92,14 +155,57 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
   };
 
   const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.backgroundColor = isDarkMode ? '#60a5fa' : '#1d4ed8';
+    e.currentTarget.style.background = 'linear-gradient(135deg, #4b5563 0%, #374151 100%)';
     e.currentTarget.style.transform = 'translateY(-1px)';
   };
 
   const handleButtonLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.backgroundColor = isDarkMode ? '#3b82f6' : '#2563eb';
+    e.currentTarget.style.background = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
     e.currentTarget.style.transform = 'translateY(0)';
   };
+
+  const handleFormatClick = () => {
+    setShowFormatDropdown(!showFormatDropdown);
+  };
+
+  const handleFormatSelect = (format: string) => {
+    setSelectedFormat(format);
+    setShowFormatDropdown(false);
+    if (onFormatChange) {
+      onFormatChange(format);
+    }
+  };
+
+  const handleFormatHover = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#e5e7eb';
+  };
+
+  const handleFormatLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#f3f4f6';
+  };
+
+  const handleDropdownItemHover = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#f3f4f6';
+  };
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      const dropdownElement = document.getElementById('format-dropdown');
+
+      // Vérifier si le clic est en dehors du dropdown
+      if (showFormatDropdown && dropdownElement && !dropdownElement.contains(target)) {
+        setShowFormatDropdown(false);
+      }
+    };
+
+    if (showFormatDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showFormatDropdown]);
 
   return (
     <div>
@@ -116,11 +222,42 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
           placeholder={placeholder}
           style={inputStyle}
         />
+
+        <div style={{ position: 'relative' }} id="format-dropdown">
+          <button
+            onClick={handleFormatClick}
+            onMouseEnter={handleFormatHover}
+            onMouseLeave={handleFormatLeave}
+            style={formatButtonStyle}
+            type="button"
+          >
+            {selectedFormat.toUpperCase()}
+            <ChevronDownIcon style={{ width: '14px', height: '14px' }} />
+          </button>
+
+          {showFormatDropdown && (
+            <div style={dropdownStyle}>
+              {formats.map((format) => (
+                <button
+                  key={format.value}
+                  onClick={() => handleFormatSelect(format.value)}
+                  onMouseEnter={handleDropdownItemHover}
+                  style={dropdownItemStyle}
+                  type="button"
+                >
+                  {format.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <button
           onClick={handleButtonClick}
           onMouseEnter={handleButtonHover}
           onMouseLeave={handleButtonLeave}
           style={buttonStyle}
+          type="button"
         >
           {showIcon && (
             <DocumentArrowDownIcon style={iconStyle} />
