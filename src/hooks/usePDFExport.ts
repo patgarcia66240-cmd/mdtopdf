@@ -19,13 +19,26 @@ export const usePDFExport = () => {
   };
 
   const exportToHTML = async (markdown: string, fileName: string, previewElement?: React.RefObject<HTMLDivElement | null>) => {
-    // Générer le HTML en récupérant le DOM du preview
-    const htmlWithPages = await generateHTMLFromPreview(fileName, previewElement, markdown);
+    // Récupérer le HTML du preview si disponible
+    let previewHTML = '';
+    if (previewElement?.current) {
+      previewHTML = previewElement.current.innerHTML;
+      console.log('Preview HTML récupéré, longueur:', previewHTML.length);
+      console.log('Contient PAGEBREAK?', previewHTML.includes('<!--PAGEBREAK-->'));
 
-    // Sauvegarder le fichier HTML avec les styles intégrés
-    const htmlBlob = new Blob([htmlWithPages], { type: 'text/html;charset=utf-8' });
-    const { saveAs } = await import('file-saver');
-    saveAs(htmlBlob, `${fileName}.html`);
+      // Debug: afficher un extrait du HTML
+      if (previewHTML.length > 0) {
+        console.log('Extrait du HTML preview:', previewHTML.substring(0, 200) + '...');
+      }
+    }
+
+    // Utiliser le service d'export modifié qui accepte le preview HTML
+    await exportService.exportDocument({
+      format: 'html',
+      filename: fileName,
+      markdown,
+      previewHTML // Passer le preview HTML au service
+    });
   };
 
   const generateHTMLFromPreview = async (fileName: string, previewElement?: React.RefObject<HTMLDivElement | null>, markdown?: string): Promise<string> => {

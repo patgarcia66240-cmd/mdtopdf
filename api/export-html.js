@@ -4,15 +4,42 @@ import gfm from "remark-gfm";
 
 export default async function handler(req, res) {
   try {
-    const { markdown, fileName = "document" } = req.body;
-    if (!markdown) return res.status(400).send("No markdown provided");
+    const { markdown, fileName = "document", previewHTML } = req.body;
 
-    // Traiter le markdown pour générer du HTML multi-pages
-    const result = await remark().use(gfm).use(html).process(markdown);
-    const htmlContent = result.toString();
+    if (!markdown && !previewHTML) {
+      return res.status(400).send("No markdown or preview HTML provided");
+    }
 
-    // Diviser le contenu en pages en utilisant les sauts de page
-    const pages = htmlContent.split(/<!--\s*pagebreak\s*-->/gi);
+    let htmlContent;
+    let pages;
+
+    if (previewHTML) {
+      // Utiliser le HTML du preview fourni
+      htmlContent = previewHTML;
+
+      // Diviser le contenu en pages en utilisant les sauts de page ou les séparateurs de pages
+      // Chercher les conteneurs de pages dans le preview HTML
+      const pageContainers = htmlContent.match(/<div[^>]*class="[^"]*page[^"]*"[^>]*>[\s\S]*?<\/div>/gi);
+
+      if (pageContainers && pageContainers.length > 0) {
+        // Extraire le contenu de chaque page
+        pages = pageContainers.map(pageContainer => {
+          // Nettoyer le conteneur de page pour garder seulement le contenu
+          return pageContainer
+            .replace(/<div[^>]*class="[^"]*page[^"]*"[^>]*>/, '')
+            .replace(/<\/div>$/, '')
+            .trim();
+        });
+      } else {
+        // Fallback : utiliser les sauts de page HTML standards
+        pages = htmlContent.split(/<!--\s*pagebreak\s*-->/gi);
+      }
+    } else {
+      // Fallback : traiter le markdown pour générer du HTML multi-pages
+      const result = await remark().use(gfm).use(html).process(markdown);
+      htmlContent = result.toString();
+      pages = htmlContent.split(/<!--\s*pagebreak\s*-->/gi);
+    }
 
     // Générer le HTML avec des pages séparées
     const multiPageHTML = generateMultiPageHTML(pages, fileName);

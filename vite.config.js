@@ -7,6 +7,9 @@ export default defineConfig({
     port: 3000,
     open: true
   },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+  },
   build: {
     outDir: 'build',
     sourcemap: true,
@@ -22,13 +25,13 @@ export default defineConfig({
       },
     },
     chunkSizeWarningLimit: 1000,
-    minify: 'terser',
-    terserOptions: {
+    minify: process.env.NODE_ENV === 'production' ? 'terser' : false,
+    terserOptions: process.env.NODE_ENV === 'production' ? {
       compress: {
         drop_console: true,
         drop_debugger: true,
       },
-    },
+    } : {},
   },
   resolve: {
     alias: {

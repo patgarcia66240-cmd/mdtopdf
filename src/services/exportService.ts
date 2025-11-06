@@ -11,6 +11,7 @@ export interface ExportOptions {
   markdown: string;
   pdfOptions?: PDFOptions;
   template?: Template;
+  previewHTML?: string; // Ajout du preview HTML pour l'export HTML
 }
 
 export class ExportService {
@@ -59,9 +60,279 @@ export class ExportService {
   }
 
   private async exportToHTML(options: ExportOptions): Promise<void> {
-    const htmlContent = await this.generateStyledHTML(options.markdown, options.template);
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    // Toujours utiliser le preview HTML pour l'export
+    await this.exportPreviewHTML(options);
+  }
+
+  private async exportPreviewHTML(options: ExportOptions): Promise<void> {
+    if (!options.previewHTML) {
+      throw new Error('Preview HTML is required for preview HTML export');
+    }
+
+    // Utiliser le preview HTML qui contient les conteneurs de pages
+    console.log('Export HTML : utilisation du preview HTML...');
+    console.log('Preview HTML contient les conteneurs de pages?', options.previewHTML.includes('class="page"'));
+
+    const multiPageHTML = this.generateMultiPageHTMLFromPreview(options.previewHTML, options.filename);
+    console.log('HTML multi-page généré, longueur:', multiPageHTML.length);
+    const blob = new Blob([multiPageHTML], { type: 'text/html;charset=utf-8' });
     saveAs(blob, `${options.filename}.html`);
+    console.log('Export HTML terminé avec succès');
+  }
+
+  private generateMultiPageHTMLFromPreview(htmlContent: string, fileName: string): string {
+    const pageTitle = fileName || "Document";
+
+    // Extraire les pages du contenu HTML
+    console.log('Recherche des pages dans le contenu HTML...');
+    console.log('HTML contient class="page"?', htmlContent.includes('class="page"'));
+    console.log('HTML reçu (premiers 500 caractères):', htmlContent.substring(0, 500));
+
+    // D'abord essayer de trouver les conteneurs de pages
+    const pageContainers = htmlContent.match(/<div[^>]*class="[^"]*page[^"]*"[^>]*>[\s\S]*?<\/div>/gi);
+    console.log('PageContainers trouvés:', pageContainers?.length || 0);
+    if (pageContainers && pageContainers.length > 0) {
+      console.log('Premier conteneur trouvé:', pageContainers[0].substring(0, 200) + '...');
+    }
+    let pages: string[] = [];
+
+    if (pageContainers && pageContainers.length > 0) {
+      console.log(`Trouvé ${pageContainers.length} conteneurs de pages`);
+      pages = pageContainers.map((pageContainer, index) => {
+        // Extraire seulement le contenu principal de la page (sans le conteneur page)
+        // Garder tout le HTML à l'intérieur du conteneur page
+        const contentMatch = pageContainer.match(/<div[^>]*class="[^"]*page[^"]*"[^>]*>([\s\S]*?)<\/div>$/);
+        if (contentMatch && contentMatch[1]) {
+          const extractedContent = contentMatch[1].trim();
+          console.log(`Page ${index + 1} - contenu extrait:`, extractedContent.substring(0, 100) + '...');
+          return extractedContent;
+        }
+        console.log(`Page ${index + 1} - fallback au conteneur complet`);
+        return pageContainer.trim();
+      });
+    } else {
+      // Pas de conteneurs de pages trouvés - créer une seule page avec tout le contenu
+      console.log('Pas de conteneurs de pages trouvés, création d\'une seule page');
+      pages = [htmlContent];
+    }
+
+    // Nettoyer les pages vides
+    pages = pages.filter(page => page.trim().length > 0);
+    console.log(`Nombre de pages après nettoyage: ${pages.length}`);
+
+    const htmlHeader = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageTitle}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            color: #1e293b;
+            margin: 0;
+            padding: 20px;
+            background: #ffffff;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            margin: 0 auto 20px auto;
+            padding: 20mm;
+            border: 1px solid #e2e8f0;
+            box-sizing: border-box;
+            page-break-after: always;
+            position: relative;
+        }
+
+        .page:last-child {
+            page-break-after: avoid;
+            margin-bottom: 0;
+        }
+
+        .page-header {
+            position: absolute;
+            top: 10mm;
+            left: 20mm;
+            right: 20mm;
+            height: 15mm;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .page-content {
+            margin-top: 30mm;
+            margin-bottom: 20mm;
+        }
+
+        .page-footer {
+            position: absolute;
+            bottom: 10mm;
+            left: 20mm;
+            right: 20mm;
+            height: 10mm;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: #1e293b;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        h1 { font-size: 20px; font-weight: 700; }
+        h2 { font-size: 16px; font-weight: 600; }
+        h3 { font-size: 14px; font-weight: 600; }
+        h4 { font-size: 13px; font-weight: 600; }
+
+        p {
+            margin-bottom: 1em;
+            font-size: 11px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 10px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+
+        code {
+            background-color: #f1f5f9;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 10px;
+        }
+
+        pre {
+            background-color: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 9px;
+        }
+
+        blockquote {
+            border-left: 4px solid #6b7280;
+            padding-left: 16px;
+            margin: 1em 0;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        ul, ol {
+            margin: 1em 0;
+            padding-left: 20px;
+            font-size: 11px;
+        }
+
+        a {
+            color: #6b7280;
+            text-decoration: none;
+            border-bottom: 1px solid #6b7280;
+        }
+
+        a:hover {
+            color: #4b5563;
+            border-bottom-color: #4b5563;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 1em 0;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+            .page {
+                margin: 0;
+                border: none;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>`;
+
+    const htmlFooter = `
+</body>
+</html>`;
+
+    let pagesHTML = '';
+
+    pages.forEach((pageContent, index) => {
+      const pageNumber = index + 1;
+      const cleanContent = pageContent.trim();
+
+      if (cleanContent) {
+        pagesHTML += `
+    <div class="page">
+        <div class="page-header">
+            Page ${pageNumber}
+        </div>
+        <div class="page-content">
+            ${cleanContent}
+        </div>
+        <div class="page-footer">
+            ${pageTitle} - Page ${pageNumber}
+        </div>
+    </div>`;
+      }
+    });
+
+    // Si aucune page valide, créer une page vide
+    if (!pagesHTML) {
+      pagesHTML = `
+    <div class="page">
+        <div class="page-header">
+            Page 1
+        </div>
+        <div class="page-content">
+            <p>Contenu vide</p>
+        </div>
+        <div class="page-footer">
+            ${pageTitle} - Page 1
+        </div>
+    </div>`;
+    }
+
+    return htmlHeader + pagesHTML + htmlFooter;
   }
 
   private async exportToPNG(options: ExportOptions): Promise<void> {

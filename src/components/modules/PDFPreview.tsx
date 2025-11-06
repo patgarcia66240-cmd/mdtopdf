@@ -1,9 +1,7 @@
-import React, { useState, useEffect, forwardRef } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { marked } from 'marked';
 import PaginationControls from './PaginationControls';
-
-// Import direct du CSS en tant que chaîne pour garantir le chargement
 
 
 interface PDFPreviewProps {
@@ -31,7 +29,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   setTotalPages: externalSetTotalPages,
   viewMode: externalViewMode,
   onViewModeChange: externalOnViewModeChange,
-  onZoomChange: externalOnZoomChange
+  /*onZoomChange: externalOnZoomChange*/
 }, ref) => {
   // Utiliser les états externes ou les états locaux
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
@@ -45,57 +43,43 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   const setTotalPages = externalSetTotalPages ?? setInternalTotalPages;
   const viewMode = externalViewMode ?? internalViewMode;
   const onViewModeChange = externalOnViewModeChange ?? setInternalViewMode;
-  const onZoomChange = externalOnZoomChange ?? (() => {});
-
-  const previewStyle = {
-    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
-    padding: '24px',
-    borderRadius: '12px',
-    border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`
+  /* const onZoomChange = externalOnZoomChange ?? (() => { });
+ */
+  const getPreviewClasses = () => {
+    return isDarkMode
+      ? 'bg-slate-800 p-6 rounded-xl border border-slate-700'
+      : 'bg-white p-6 rounded-xl border border-gray-200';
   };
 
-  const headerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px'
+  const getTitleClasses = () => {
+    return isDarkMode
+      ? 'm-0 text-lg font-bold text-slate-100 flex items-center gap-2'
+      : 'm-0 text-lg font-bold text-slate-800 flex items-center gap-2';
   };
 
-  const titleStyle = {
-    margin: 0,
-    fontSize: '18px',
-    fontWeight: '700',
-    color: isDarkMode ? '#f1f5f9' : '#1e293b',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
+  const getInfoClasses = () => {
+    return isDarkMode
+      ? 'text-xs text-slate-400 flex items-center gap-2'
+      : 'text-xs text-gray-500 flex items-center gap-2';
   };
 
-  const contentWrapperStyle = {
-    backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc',
-    borderRadius: '8px',
-    padding: '20px',
-    overflow: 'auto',
-    transform: `scale(${previewZoom / 100})`,
-    transformOrigin: 'top left',
-    transition: 'transform 0.2s ease',
-    display: 'flex',
-    justifyContent: 'center'
+  const getContentWrapperClasses = () => {
+    return isDarkMode
+      ? 'bg-slate-900 rounded-lg p-5 overflow-auto origin-top-left transition-transform duration-200 flex justify-center'
+      : 'bg-gray-50 rounded-lg p-5 overflow-auto origin-top-left transition-transform duration-200 flex justify-center';
   };
 
-  const contentStyle: React.CSSProperties = {
-    backgroundColor: '#ffffff',
-    padding: '0mm 20mm 10mm 20mm', // Marges optimisées : haut 0mm, bas 10mm (juste pour le footer)
-    borderRadius: '4px',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-    width: '210mm', // A4 width exact
-    height: '297mm', // A4 height exact
-    boxSizing: 'border-box',
-    overflow: 'hidden',
-    position: 'relative'
+  const getThemeClasses = () => {
+    const themeClasses = {
+      modern: 'font-sans text-slate-800 leading-snug text-xs',
+      classic: 'font-serif text-gray-700 leading-relaxed text-[11px]',
+      academic: 'font-serif text-gray-800 leading-loose text-[11px]',
+      minimal: 'font-system text-gray-700 leading-tight text-xs'
+    };
+    return themeClasses[previewTheme as keyof typeof themeClasses] || themeClasses.modern;
   };
 
-  
+
   // Thèmes CSS pour l'aperçu
   const themeStyles = {
     modern: {
@@ -240,10 +224,10 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
       font-size: ${currentTheme.fontSize};
     `;
 
-    html = html.replace(/<h1([^>]*)>/g, `<h1$1 class="text-slate-900 text-lg font-black my-4 font-black" style="font-weight: 900 !important;">`);
-    html = html.replace(/<h2([^>]*)>/g, `<h2$1 class="text-slate-700 text-base font-black my-3 font-black" style="font-weight: 900 !important;">`);
-    html = html.replace(/<h3([^>]*)>/g, `<h3$1 class="text-slate-600 text-sm font-black my-3 font-black" style="font-weight: 900 !important;">`);
-    html = html.replace(/<h4([^>]*)>/g, `<h4$1 class="text-slate-500 text-xs font-bold my-2 font-bold" style="font-weight: 700 !important;">`);
+    html = html.replace(/<h1([^>]*)>/g, `<h1$1 class="text-slate-900 text-lg font-black my-4" >`);
+    html = html.replace(/<h2([^>]*)>/g, `<h2$1 class="text-slate-700 text-base font-black my-3" `);
+    html = html.replace(/<h3([^>]*)>/g, `<h3$1 class="text-slate-600 text-sm font-black my-3" >`);
+    html = html.replace(/<h4([^>]*)>/g, `<h4$1 class="text-slate-500 text-xs font-bold my-2" >`);
 
     // Styles pour le texte gras (strong et b)
     html = html.replace(/<strong([^>]*)>/g, `<strong$1 style="font-weight: 700; color: inherit;">`);
@@ -261,7 +245,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
       return match;
     });
 
-        // Traitement des paragraphes pour préserver les sauts de ligne avec Tailwind
+    // Traitement des paragraphes pour préserver les sauts de ligne avec Tailwind
     html = html.replace(/<p([^>]*)>/g, `<p$1 class="my-2" style="${themeCSS}">`);
     html = html.replace(/<ul([^>]*)>/g, `<ul$1 class="my-2 ml-4 list-disc" style="${themeCSS}">`);
     html = html.replace(/<ol([^>]*)>/g, `<ol$1 class="my-2 ml-4 list-decimal" style="${themeCSS}">`);
@@ -297,10 +281,10 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
       }
     });
 
-        html = html.replace(/<blockquote([^>]*)>/g, `<blockquote$1 class="border-l-4 border-gray-300 pl-4 my-2 italic text-gray-600">`);
-    html = html.replace(/<table([^>]*)>/g, `<table$1 class="w-full border-collapse my-2">`);
-    html = html.replace(/<th([^>]*)>/g, `<th$1 class="border border-gray-200 px-2 py-1 bg-gray-50 text-left text-xs font-semibold">`);
-    html = html.replace(/<td([^>]*)>/g, `<td$1 class="border border-gray-200 px-2 py-1 text-xs">`);
+    html = html.replace(/<blockquote([^>]*)>/g, `<blockquote$1 class="border-l-4 border-gray-300 pl-4 my-2 italic text-gray-600">`);
+    html = html.replace(/<table([^>]*)>/g, `<table$1 class="w-auto border-collapse my-2 text-xs">`);
+    html = html.replace(/<th([^>]*)>/g, `<th$1 class="border border-gray-200 px-1.5 py-1 bg-gray-50 text-left text-[10px] font-semibold whitespace-nowrap">`);
+    html = html.replace(/<td([^>]*)>/g, `<td$1 class="border border-gray-200 px-1.5 py-0.5 text-[10px] whitespace-nowrap">`);
 
     // Nettoyer les combinaisons <br>\n pour éviter les doublons
     html = html.replace(/<br>\s*\n/g, '<br>');
@@ -317,8 +301,8 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
     return html;
   };
 
- 
-  
+
+
   // Traiter le HTML quand le markdown ou le thème change
   useEffect(() => {
     const processHTML = async () => {
@@ -365,40 +349,19 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
     const currentContent = pageContents[currentPage - 1] || processedHTML || '';
 
     return (
-      <div style={{ position: 'relative', marginBottom: totalPages > 1 ? '10px' : '0' }}>
-        <div style={contentStyle}>
+      <div className={`relative ${totalPages > 1 ? 'mb-2.5' : ''}`}>
+        <div className="bg-white p-[10mm] pb-[5mm] rounded shadow-lg w-[210mm] h-[297mm] box-border overflow-hidden relative">
           {/* Header avec contrôles de pagination intégrés */}
-          <div style={{
-            position: 'absolute',
-            top: '0mm',
-            left: '0mm',
-            right: '0mm',
-            height: '12mm', // Augmenter la hauteur pour les contrôles
-            backgroundColor: '#f8fafc',
-            zIndex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '0 5mm',
-            borderBottom: '1px solid #e5e7eb'
-          }}>
-            {/* Header sans contrôle de pagination - le contrôle est géré à l'extérieur */}
-            <div style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              color: '#374151'
-            }}>
+          <div className="absolute top-0 left-0 right-0 h-[6mm] bg-gray-50 z-10 flex justify-center items-center px-[5mm] border-b border-gray-200">
+            <div className="text-sm font-semibold text-gray-700">
               Page {currentPage} / {totalPages}
             </div>
           </div>
 
           {/* Contenu principal - hauteur limitée pour protéger le header */}
-          <div style={{
-            height: 'calc(100% - 25mm)', // Hauteur ajustée pour le header plus grand
-            overflow: 'hidden',
-            paddingTop: '25mm' // Espace pour le header plus grand
-          }}>
+          <div className="h-[calc(100%)] overflow-hidden pt-[1mm]">
             <div
+              className={getThemeClasses()}
               dangerouslySetInnerHTML={{ __html: currentContent }}
             />
           </div>
@@ -414,44 +377,20 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
       const pageContent = pageContents[i] || processedHTML || '';
 
       pages.push(
-        <div key={i} style={{ position: 'relative', marginBottom: i < totalPages - 1 ? '20px' : '0' }}>
+        <div key={i} className={`relative ${i < totalPages - 1 ? 'mb-5' : ''}`}>
           {/* Page A4 */}
-          <div style={contentStyle}>
+          <div className="bg-white p-[10mm] pb-[5mm] rounded shadow-lg w-[210mm] h-[297mm] box-border overflow-hidden relative">
             {/* Header avec numéro de page (lecture seule pour mode "tout afficher") */}
-            <div style={{
-              position: 'absolute',
-              top: '0mm',
-              left: '0mm',
-              right: '0mm',
-              height: '12mm', // Hauteur réduite pour le header en mode tout afficher
-              backgroundColor: '#f8fafc',
-              zIndex: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderBottom: '1px solid #e5e7eb'
-            }}>
-              <span style={{
-                fontSize: '12px',
-                color: '#374151',
-                fontWeight: '600',
-                padding: '3px 10px',
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                border: '1px solid #d1d5db',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-              }}>
+            <div className="absolute top-0 left-0 right-0 h-[6mm] bg-gray-50 z-10 flex justify-center items-center border-b border-gray-200">
+              <span className="text-xs text-gray-700 font-semibold px-2.5 py-1 bg-white rounded-full border border-gray-300 shadow-sm">
                 Page {i + 1} / {totalPages}
               </span>
             </div>
 
             {/* Contenu principal - hauteur limitée pour protéger le header */}
-            <div style={{
-              height: 'calc(100% - 12mm)', // Hauteur fixe pour laisser la place au header
-              overflow: 'hidden',
-              paddingTop: '12mm' // Espace pour le header
-            }}>
+            <div className="h-[calc(100%)] overflow-hidden pt-[1mm]">
               <div
+                className={getThemeClasses()}
                 dangerouslySetInnerHTML={{ __html: pageContent }}
               />
             </div>
@@ -459,17 +398,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
 
           {/* Séparateur de page */}
           {i < totalPages - 1 && (
-            <div style={{
-              position: 'absolute',
-              bottom: '-10px',
-              left: '0',
-              right: '0',
-              height: '1px',
-              backgroundColor: isDarkMode ? '#475569' : '#d1d5db',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>              
+            <div className={`absolute bottom-[-10px] left-0 right-0 h-px ${isDarkMode ? 'bg-slate-600' : 'bg-gray-300'} flex items-center justify-center`}>
             </div>
           )}
         </div>
@@ -479,44 +408,25 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   };
 
   return (
-    <div style={previewStyle} className="preview-container">
-        <div style={{
-          ...headerStyle,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <h3 style={titleStyle}>
-            <EyeIcon style={{ width: '18px', height: '18px' }} />
-            Aperçu PDF
-          </h3>
-          <div style={{
-            fontSize: '12px',
-            color: isDarkMode ? '#64748b' : '#6b7280',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span>Format: A4 (210×297mm)</span>
-            <span>•</span>
-            <span>{totalPages} page{totalPages > 1 ? 's' : ''}</span>
-            <span>•</span>
-            <span>Thème: {previewTheme}</span>
-            <span>•</span>
-            <span>{previewZoom}%</span>
-          </div>
+    <div className={`${getPreviewClasses()} preview-container`}>
+      <div className="flex justify-between items-center mb-5">
+        <h3 className={getTitleClasses()}>
+          <EyeIcon className="w-4.5 h-4.5" />
+          Aperçu PDF
+        </h3>
+        <div className={getInfoClasses()}>
+          <span>Format: A4 (210×297mm)</span>
+          <span>•</span>
+          <span>{totalPages} page{totalPages > 1 ? 's' : ''}</span>
+          <span>•</span>
+          <span>Thème: {previewTheme}</span>
+          <span>•</span>
+          <span>{previewZoom}%</span>
         </div>
+      </div>
 
       {/* Pagination en haut */}
-      <div style={{
-        backgroundColor: 'transparent',
-        padding: '8px 0',
-        marginBottom: '12px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-
+      <div className="bg-transparent py-2 mb-3 flex justify-center items-center">
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
@@ -527,8 +437,12 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
         />
       </div>
 
-      <div ref={ref} style={contentWrapperStyle}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div
+        ref={ref}
+        className={getContentWrapperClasses()}
+        style={{ transform: `scale(${previewZoom / 100})` }}
+      >
+        <div className="flex flex-col items-center">
           {viewMode === 'single' ? renderSinglePage() : renderAllPages()}
         </div>
       </div>

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useExport } from "./hooks/api/useExport"; // 🔥 Hook d'export serverless TanStack
 import InputWithButton from "./components/ui/InputWithButton";
 import TemplateCard from "./components/ui/TemplateCard";
+import { TwentyFirstToolbar } from "@21st-extension/toolbar-react";
+import { ReactPlugin } from "@21st-extension/react";
 import {
   DocumentIcon,
   Cog6ToothIcon,
@@ -122,6 +124,7 @@ function App() {
   // ----- Rendu -----
   return (
     <div className="app-container" style={containerStyle}>
+      <TwentyFirstToolbar config={{ plugins: [ReactPlugin] }} />
       {/* --- Header --- */}
       <h1
         style={{
