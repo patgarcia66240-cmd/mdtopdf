@@ -20,9 +20,10 @@ export default async function handler(req, res) {
       },
     });
 
+    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9-_\.]/g, '_');
+
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename=${fileName}.pdf`);
-    res.send(pdf.content);
+    res.setHeader("Content-Disposition", `attachment; filename="${sanitizedFileName}.pdf"`);    res.send(pdf.content);
   } catch (err) {
     console.error('PDF export error:', err);
     res.status(500).json({ error: "PDF export failed" });

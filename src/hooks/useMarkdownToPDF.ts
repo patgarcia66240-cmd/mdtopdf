@@ -2,13 +2,44 @@ import { useState, RefObject } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-export interface PdfOptions {
+// Type pour compatibilité avec le code existant
+interface MarkdownToPDFOptions {
+  // Propriétés de PDFOptions
+  format?: 'a4' | 'letter' | 'legal';
+  orientation?: 'portrait' | 'landscape';
+  margins?: { top: number; right: number; bottom: number; left: number; };
+  fontSize?: number;
+  fontFamily?: string;
+
+  // Propriétés pour compatibilité ascendante
   pageWidth?: number;
   margin?: number;
+  showPageNumbers?: boolean;
+
+  // Propriétés legacy pour compatibilité (string)
   header?: string;
   footer?: string;
-  showPageNumbers?: boolean;
+
+  // Propriétés modernes (HeaderFooter objects)
+  headerFooter?: { text: string; alignment: 'left' | 'center' | 'right'; fontSize: number; fontStyle: 'normal' | 'bold' | 'italic'; };
 }
+
+// Helper pour obtenir la marge depuis les options (compatibilité)
+const getMargin = (options: MarkdownToPDFOptions): number => {
+  // Utiliser l'ancienne propriété margin si disponible
+  if (options.margin !== undefined) {
+    return options.margin;
+  }
+
+  // Utiliser les nouvelles marges si disponibles
+  if (options.margins) {
+    // Retourner la marge la plus petite (conservative)
+    return Math.min(options.margins.top, options.margins.bottom, options.margins.left, options.margins.right);
+  }
+
+  // Valeur par défaut
+  return 15;
+};
 
 export const useMarkdownToPDF = () => {
   const [isConverting, setIsConverting] = useState(false);
@@ -19,7 +50,7 @@ export const useMarkdownToPDF = () => {
   const convertToPDF = async (
     elementRef: RefObject<HTMLElement>,
     fileName = "document",
-    options: PdfOptions = {}
+    options: MarkdownToPDFOptions = {}
   ): Promise<void> => {
     if (!elementRef?.current) {
       alert("Zone de rendu introuvable");
@@ -63,10 +94,8 @@ export const useMarkdownToPDF = () => {
         parseInt(computedStyle.fontWeight) >= 700;
       const isDark =
         document.body.dataset.theme === "dark" ||
-        el.closest("[data-theme='dark']") ||
-        color === "rgb(255, 255, 255)" ||
-        color.includes("255, 255, 255");
-
+        !!el.closest("[data-theme='dark']") ||
+        color === "rgb(255, 255, 255)";
       // Titres / texte normal / code avec effets
       if (fontSize >= 32 || (fontSize >= 24 && isBold)) {
         element.style.textShadow = `
@@ -114,7 +143,7 @@ export const useMarkdownToPDF = () => {
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = options.margin || 15;
+      const margin = getMargin(options);
       const contentWidth = pageWidth - margin * 2;
 
       // Calculate available content height more precisely
@@ -144,7 +173,7 @@ export const useMarkdownToPDF = () => {
         // Split HTML content by page breaks
         const parts = htmlContent.split(pageBreakPattern);
 
-        parts.forEach((part, index) => {
+        parts.forEach((part, _index) => {
           const cleanPart = part.trim();
           if (cleanPart) {
             // Create a new div for each page content
@@ -282,11 +311,9 @@ export const useMarkdownToPDF = () => {
           el.style.letterSpacing = o.letterSpacing;
         }
       });
-      Object.keys(originalStyles).forEach((k) => {
-        // @ts-ignore
-        el.style[k] = (originalStyles as any)[k];
-      });
-      setIsConverting(false);
+      (Object.keys(originalStyles) as Array<keyof typeof originalStyles>).forEach((key) => {
+        (el.style as any)[key] = originalStyles[key];
+      });      setIsConverting(false);
     }
   };
 

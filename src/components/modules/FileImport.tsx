@@ -293,11 +293,10 @@ const FileImport: React.FC<FileImportProps> = ({
         <div style={subTextStyle}>
           ou cliquez pour parcourir vos fichiers
         </div>
-        <button style={buttonStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={buttonStyle}>
           <DocumentArrowDownIcon style={{ width: '16px', height: '16px' }} />
           Choisir un fichier
-        </button>
-        <div style={{
+        </div>        <div style={{
           fontSize: '11px', // Réduit de 12px à 11px
           color: isDarkMode ? '#6b7280' : '#9ca3af',
           marginTop: '8px' // Réduit de 12px à 8px

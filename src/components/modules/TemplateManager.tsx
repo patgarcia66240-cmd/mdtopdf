@@ -8,29 +8,68 @@ import {
   FolderOpenIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+import { Template, TemplateStyles, TemplateLayout } from '@/types/app';
 
-interface Template {
+// Type pour TemplateManager qui inclut le content obligatoire
+export interface TemplateWithContent {
   id: string;
   name: string;
   description: string;
-  content: string;
-  style: {
-    fontFamily: string;
-    fontSize: string;
-    lineHeight: string;
-    color: string;
-    headerColor: string;
-    backgroundColor: string;
-    borderColor: string;
-  };
-  category: 'business' | 'academic' | 'creative' | 'technical' | 'custom';
+  category: 'professional' | 'academic' | 'creative' | 'custom';
+  styles: TemplateStyles;
+  layout: TemplateLayout;
+  preview: string;
+  content: string; // Propriété obligatoire pour le contenu
+  style?: any;
+  colors: string[];
+  isPro: boolean;
 }
 
+// Type pour le formulaire de création/édition
+interface TemplateFormData {
+  name: string;
+  description: string;
+  content: string;
+  style: LegacyStyle;
+  category: 'professional' | 'academic' | 'creative' | 'custom';
+}
+
+// Ancienne structure de style pour compatibilité
+interface LegacyStyle {
+  fontFamily: string;
+  fontSize: string;
+  lineHeight: string;
+  color: string;
+  headerColor: string;
+  backgroundColor: string;
+  borderColor: string;
+}
+
+// Fonction pour convertir l'ancien style vers le nouveau format
+const convertLegacyStyle = (legacy: LegacyStyle): TemplateStyles => ({
+  fontFamily: legacy.fontFamily,
+  fontSize: parseInt(legacy.fontSize),
+  lineHeight: parseFloat(legacy.lineHeight),
+  colors: {
+    primary: legacy.headerColor,
+    secondary: legacy.color,
+    text: legacy.color,
+    background: legacy.backgroundColor,
+  }
+});
+
+// Fonction pour créer un layout par défaut
+const createDefaultLayout = (): TemplateLayout => ({
+  pageSize: 'a4',
+  orientation: 'portrait',
+  margins: { top: 20, right: 20, bottom: 20, left: 20 }
+});
+
 interface TemplateManagerProps {
-  templates: Template[];
+  templates: TemplateWithContent[];
   onTemplateSelect: (template: Template) => void;
-  onTemplateCreate: (template: Omit<Template, 'id'>) => void;
-  onTemplateUpdate: (id: string, template: Partial<Template>) => void;
+  onTemplateCreate: (template: TemplateWithContent) => void;
+  onTemplateUpdate: (id: string, template: Partial<TemplateWithContent>) => void;
   onTemplateDelete: (id: string) => void;
   isDarkMode: boolean;
 }
@@ -45,9 +84,9 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
-  const [formData, setFormData] = useState({
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateWithContent | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<TemplateWithContent | null>(null);
+  const [formData, setFormData] = useState<TemplateFormData>({
     name: '',
     description: '',
     content: '',
@@ -60,10 +99,10 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
       backgroundColor: '#ffffff',
       borderColor: '#e5e7eb'
     },
-    category: 'business' as const
+    category: 'professional'
   });
 
-  const defaultTemplates: Template[] = [
+  const defaultTemplates: TemplateWithContent[] = [
     {
       id: 'business-report',
       name: 'Rapport d\'entreprise',
@@ -87,7 +126,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 ### Actions prioritaires
 
 ### Calendrier de mise en œuvre`,
-      style: {
+      styles: convertLegacyStyle({
         fontFamily: 'Inter, sans-serif',
         fontSize: '12px',
         lineHeight: '1.4',
@@ -95,8 +134,12 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
         headerColor: '#1e293b',
         backgroundColor: '#ffffff',
         borderColor: '#e5e7eb'
-      },
-      category: 'business'
+      }),
+      layout: createDefaultLayout(),
+      preview: '/templates/business-report-preview.png',
+      category: 'professional',
+      colors: ['#1e293b', '#3b82f6', '#10b981', '#f59e0b'],
+      isPro: false
     },
     {
       id: 'academic-paper',
@@ -131,7 +174,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 ## Conclusion
 
 ## Références`,
-      style: {
+      styles: convertLegacyStyle({
         fontFamily: 'Times New Roman, serif',
         fontSize: '11px',
         lineHeight: '1.6',
@@ -139,8 +182,12 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
         headerColor: '#1f2937',
         backgroundColor: '#ffffff',
         borderColor: '#d1d5db'
-      },
-      category: 'academic'
+      }),
+      layout: createDefaultLayout(),
+      preview: `/templates/default-preview.png`,
+      category: 'academic',
+      colors: ['#1f2937', '#059669', '#dc2626', '#7c3aed'],
+      isPro: false
     },
     {
       id: 'creative-portfolio',
@@ -184,7 +231,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 ### Année
 
 ## Contact`,
-      style: {
+      styles: convertLegacyStyle({
         fontFamily: 'Inter, sans-serif',
         fontSize: '12px',
         lineHeight: '1.5',
@@ -192,13 +239,19 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
         headerColor: '#1e293b',
         backgroundColor: '#ffffff',
         borderColor: '#e5e7eb'
-      },
-      category: 'creative'
+      }),
+      layout: createDefaultLayout(),
+      preview: `/templates/default-preview.png`,
+      category: 'creative',
+      colors: ['#374151', '#f59e0b', '#8b5cf6', '#ec4899'],
+      isPro: false
     }
   ];
 
-  const allTemplates = [...defaultTemplates, ...templates];
-
+  const allTemplates = [
+    ...defaultTemplates,
+    ...templates.filter(t => !defaultTemplates.some(dt => dt.id === t.id))
+  ];
   const containerStyle = {
     backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     borderRadius: '12px',
@@ -275,8 +328,16 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
   const handleCreateTemplate = () => {
     if (formData.name && formData.content) {
       onTemplateCreate({
-        ...formData,
-        category: formData.category
+        id: '', // Sera généré automatiquement
+        name: formData.name,
+        description: formData.description,
+        content: formData.content,
+        styles: convertLegacyStyle(formData.style),
+        layout: createDefaultLayout(),
+        preview: '/templates/default-preview.png',
+        category: formData.category,
+        colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+        isPro: false
       });
       setShowCreateModal(false);
       resetForm();
@@ -285,7 +346,15 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 
   const handleUpdateTemplate = () => {
     if (selectedTemplate && formData.name && formData.content) {
-      onTemplateUpdate(selectedTemplate.id, formData);
+      onTemplateUpdate(selectedTemplate.id, {
+        name: formData.name,
+        description: formData.description,
+        content: formData.content,
+        styles: convertLegacyStyle(formData.style),
+        layout: createDefaultLayout(),
+        preview: '/templates/default-preview.png',
+        category: formData.category
+      });
       setShowEditModal(false);
       setSelectedTemplate(null);
       resetForm();
@@ -306,17 +375,28 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
         backgroundColor: '#ffffff',
         borderColor: '#e5e7eb'
       },
-      category: 'business'
+      category: 'professional'
     });
   };
 
-  const openEditModal = (template: Template) => {
+  const openEditModal = (template: TemplateWithContent) => {
     setSelectedTemplate(template);
+    // Convert back to legacy format for form compatibility
+    const legacyStyle = {
+      fontFamily: template.styles.fontFamily,
+      fontSize: `${template.styles.fontSize}px`,
+      lineHeight: template.styles.lineHeight.toString(),
+      color: template.styles.colors.text,
+      headerColor: template.styles.colors.primary,
+      backgroundColor: template.styles.colors.background,
+      borderColor: '#e5e7eb'
+    };
+
     setFormData({
       name: template.name,
       description: template.description,
       content: template.content,
-      style: template.style,
+      style: legacyStyle,
       category: template.category
     });
     setShowEditModal(true);
@@ -451,8 +531,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
               </label>
               <select
                 value={formData.category}
-                onChange={(e) => setFormData({...formData, category: e.target.value as any})}
-                style={{
+                onChange={(e) => setFormData({...formData, category: e.target.value as Template['category']})}                style={{
                   width: '100%',
                   padding: '8px 12px',
                   border: `1px solid ${isDarkMode ? '#4b5563' : '#d1d5db'}`,
@@ -761,14 +840,14 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
             </div>
 
             <div style={{
-              backgroundColor: previewTemplate.style.backgroundColor,
-              border: `1px solid ${previewTemplate.style.borderColor}`,
+              backgroundColor: previewTemplate.styles.colors.background,
+              border: `1px solid #e5e7eb`,
               borderRadius: '8px',
               padding: '20px',
-              fontFamily: previewTemplate.style.fontFamily,
-              fontSize: previewTemplate.style.fontSize,
-              lineHeight: previewTemplate.style.lineHeight,
-              color: previewTemplate.style.color,
+              fontFamily: previewTemplate.styles.fontFamily,
+              fontSize: `${previewTemplate.styles.fontSize}px`,
+              lineHeight: previewTemplate.styles.lineHeight.toString(),
+              color: previewTemplate.styles.colors.text,
               whiteSpace: 'pre-wrap'
             }}>
               {previewTemplate.content}

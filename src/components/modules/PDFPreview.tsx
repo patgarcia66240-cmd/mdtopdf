@@ -44,7 +44,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   const viewMode = externalViewMode ?? internalViewMode;
   const onViewModeChange = externalOnViewModeChange ?? setInternalViewMode;
   /* const onZoomChange = externalOnZoomChange ?? (() => { });
- */
+*/
   const getPreviewClasses = () => {
     return isDarkMode
       ? 'bg-slate-800 p-6 rounded-xl border border-slate-700'
@@ -174,12 +174,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
     html = convertBoldMarkdown(html);
 
     // Réduire la police dans les colonnes après conversion du markdown
-    console.log('=== DEBUG COLUMN SIZING ===');
-    console.log('HTML before column processing:', html);
-    html = reduceFontInColumns(html);
-    console.log('HTML after column processing:', html);
-
-    // Ajouter des styles CSS spécifiques pour forcer la police dans les colonnes
+    html = reduceFontInColumns(html);    // Ajouter des styles CSS spécifiques pour forcer la police dans les colonnes
     const columnStyles = `
       <style>
         /* Styles universels pour les colonnes */
@@ -303,21 +298,9 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
 
 
 
-  // Traiter le HTML quand le markdown ou le thème change
-  useEffect(() => {
-    const processHTML = async () => {
-      const html = await getProcessedHTML(markdown);
-      setProcessedHTML(html);
-      const pages = splitContentByPages(html);
-      setTotalPages(pages.length);
-      setCurrentPage(1);
-    };
-    processHTML();
-  }, [markdown, previewTheme]);
-
+  // Fonction pour diviser le contenu en pages en fonction des sauts de page
   const splitContentByPages = (html: string): string[] => {
-    // Vérifier s'il y a des sauts de page explicites
-    const pageBreakPattern = /<div[^>]*style="[^"]*page-break-before:\s*always[^"]*"[^>]*><\/div>/gi;
+    const pageBreakPattern = /<div[^>]*style="page-break-before:\s*always[^"]*"[^>]*>/gi;
     const hasPageBreaks = pageBreakPattern.test(html);
 
     if (hasPageBreaks) {
@@ -342,6 +325,18 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
       return [html];
     }
   };
+
+  // Traiter le HTML quand le markdown ou le thème change
+  useEffect(() => {
+    const processHTML = async () => {
+      const html = await getProcessedHTML(markdown);
+      setProcessedHTML(html);
+      const pages = splitContentByPages(html);
+      setTotalPages(pages.length);
+      setCurrentPage(1);
+    };
+    processHTML();
+  }, [markdown, previewTheme, setTotalPages, setCurrentPage]);
 
   const pageContents = processedHTML ? splitContentByPages(processedHTML) : [''];
 
@@ -410,10 +405,13 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   return (
     <div className={`${getPreviewClasses()} preview-container`}>
       <div className="flex justify-between items-center mb-5">
-        <h3 className={getTitleClasses()}>
-          <EyeIcon className="w-4.5 h-4.5" />
-          Aperçu PDF
-        </h3>
+        <div className="flex items-center  align-center gap-2">
+          <EyeIcon className="w-4 h-4" />
+
+          <h3 className={getTitleClasses()}>
+            Aperçu PDF
+          </h3>
+        </div>
         <div className={getInfoClasses()}>
           <span>Format: A4 (210×297mm)</span>
           <span>•</span>

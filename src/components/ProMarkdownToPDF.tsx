@@ -3,10 +3,14 @@ import MarkdownEditor from './modules/MarkdownEditor';
 import PDFControlPanel from './modules/PDFControlPanel';
 import PDFPreview from './modules/PDFPreview';
 import PaginationControls from './modules/PaginationControls';
-import TemplateSelector from './modules/TemplateSelector';
+import TemplateSelectorEnhanced from './templates/TemplateSelectorEnhanced';
 import ExportPanel from './modules/ExportPanel';
+import AdvancedExportPanel from './export/AdvancedExportPanel';
 import FileImport from './modules/FileImport';
 import Header from './modules/Header';
+// import AccessibilityMonitor from './accessibility/AccessibilityMonitor';
+import SkipLink from './accessibility/SkipLink';
+import FocusManager from './accessibility/FocusManager';
 import { usePDFExport } from '../hooks/usePDFExport';
 import { useTemplates } from '../hooks/useTemplates';
 import { PDFOptions } from '../types/app';
@@ -350,6 +354,7 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [viewMode, setViewMode] = useState<'single' | 'all'>('single');
+  const [showAdvancedExport, setShowAdvancedExport] = useState(false);
 
   const [pdfOptions, setPdfOptions] = useState<PDFOptions>({
     format: 'a4',
@@ -402,13 +407,15 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
   const leftPanelStyle = {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '24px'
+    gap: '24px',
+    tabIndex: 0
   };
 
   const rightPanelStyle = {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '24px'
+    gap: '24px',
+    tabIndex: 0
   };
 
   // Handlers
@@ -513,9 +520,18 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
 
 
   return (
-    <div style={containerStyle}>
-      {/* Header */}
-      <Header
+    <FocusManager isDarkMode={isDarkMode}>
+      <div style={containerStyle} role="application" aria-label="MDtoPDF Pro - Convertisseur Markdown vers PDF">
+        {/* Skip Links pour accessibilité */}
+        <SkipLink targetId="editor-panel">
+          Passer à l'édition
+        </SkipLink>
+        <SkipLink targetId="preview-panel">
+          Passer à l'aperçu
+        </SkipLink>
+
+        {/* Header */}
+        <Header
         title={getTitle()}
         showImport={showImport}
         showTemplates={showTemplates}
@@ -523,11 +539,12 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
         isDarkMode={isDarkMode}
         onTabChange={handleTabChange}
         onThemeToggle={() => setIsDarkMode(!isDarkMode)}
+        onAdvancedExport={() => setShowAdvancedExport(true)}
       />
 
       {/* Main Content */}
-      <div style={mainContentStyle}>
-        <div style={leftPanelStyle}>
+      <main style={mainContentStyle} role="main">
+        <div style={leftPanelStyle} id="editor-panel" role="region" aria-label="Panneau d'édition et de configuration">
           {showOptions && (
             <PDFControlPanel
               pdfOptions={pdfOptions}
@@ -559,13 +576,12 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
             isDarkMode={isDarkMode}
           />
           {showTemplates && (
-            <TemplateSelector
-              templates={templates}
-              selectedTemplate={selectedTemplate}
-              onTemplateSelect={setSelectedTemplate}
-              onCreateTemplate={handleCreateTemplate}
+            <TemplateSelectorEnhanced
               isDarkMode={isDarkMode}
-              onApplyTemplate={handleApplyTemplate}
+              onTemplateSelect={(template) => {
+                setSelectedTemplate(template);
+                handleApplyTemplate('', template);
+              }}
             />
           )}
           {showExport && (
@@ -583,7 +599,7 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
           )}
         </div>
 
-        <div style={rightPanelStyle}>
+        <div style={rightPanelStyle} id="preview-panel" role="region" aria-label="Panneau d'aperçu PDF">
           {/* Aperçu PDF */}
           <div style={{ position: 'relative' }}>
               <PDFPreview
@@ -602,8 +618,28 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
             />
           </div>
         </div>
+      </main>
+
+      {/* Moniteur d'accessibilité - Temporairement désactivé */}
+      {/* <AccessibilityMonitor
+        isDarkMode={isDarkMode}
+        onAuditComplete={(results) => {
+          console.log('🔍 Audit accessibilité terminé:', results);
+          // TODO: Implémenter les corrections automatiques basées sur les résultats
+        }}
+      /> */}
+
+      {/* Panneau d'export avancé */}
+      {showAdvancedExport && (
+        <AdvancedExportPanel
+          markdown={markdown}
+          elementRef={markdownRef}
+          isDarkMode={isDarkMode}
+          onClose={() => setShowAdvancedExport(false)}
+        />
+      )}
       </div>
-    </div>
+    </FocusManager>
   );
 };
 

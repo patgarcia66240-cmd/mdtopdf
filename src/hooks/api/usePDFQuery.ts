@@ -16,8 +16,8 @@ async function exportPDF(markdown: string, fileName = "document") {
   a.download = `${fileName}.pdf`;
   a.click();
   a.remove();
+  URL.revokeObjectURL(url);
 }
-
 export const usePDFQuery = () =>
   useMutation({
     mutationFn: ({ markdown, fileName }: { markdown: string; fileName?: string }) =>

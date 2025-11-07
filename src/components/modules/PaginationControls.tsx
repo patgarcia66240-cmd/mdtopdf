@@ -10,7 +10,6 @@ interface PaginationControlsProps {
   onViewModeChange: (mode: 'single' | 'all') => void;
   isDarkMode: boolean;
 }
-
 const PaginationControls: React.FC<PaginationControlsProps> = ({
   currentPage,
   totalPages,

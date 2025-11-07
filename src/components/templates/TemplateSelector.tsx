@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTemplates } from '@/hooks/api/usePDFQuery';
+import { useTemplates } from '@/hooks/useTemplates';
 import { useAppStore } from '@/stores/appStore';
 import { Template } from '@/types/app';
 import {

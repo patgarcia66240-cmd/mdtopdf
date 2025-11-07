@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import {
+  SunIcon,
+  MoonIcon,
+  PencilIcon,
+  ArrowDownTrayIcon,
+  BookOpenIcon,
+  ArchiveBoxIcon
+} from '@heroicons/react/24/outline';
 
 interface HeaderProps {
   title: string;
@@ -9,6 +16,7 @@ interface HeaderProps {
   isDarkMode: boolean;
   onTabChange: (tab: 'editor' | 'import' | 'templates' | 'export') => void;
   onThemeToggle: () => void;
+  onAdvancedExport?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -18,166 +26,116 @@ const Header: React.FC<HeaderProps> = ({
   showExport,
   isDarkMode,
   onTabChange,
-  onThemeToggle
+  onThemeToggle,
+  onAdvancedExport
 }) => {
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
-  // Styles
-  const headerStyle = {
-    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
-    padding: '8px 16px',
-    borderBottom: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    position: 'sticky' as const,
-    top: 0,
-    zIndex: 100,
-    boxShadow: isDarkMode ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.1)'
-  };
 
-  const titleStyle = {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: isDarkMode ? '#f1f5f9' : '#1e293b',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  };
+  // Déterminer les classes Tailwind pour les boutons d'onglets
+  const getTabButtonClasses = (isActive: boolean) => {
+    const baseClasses = "px-5 py-2 border-0 rounded-t-lg text-sm font-medium cursor-pointer transition-all duration-200 border-b-2 min-w-[120px] flex items-center justify-start gap-0 outline-none appearance-none transform translate-y-0 hover:translate-y-[-1px] hover:shadow-lg";
 
-  const navigationStyle = {
-    display: 'flex',
-    gap: '2px', // Réduire l'espacement pour les onglets Windows
-    alignItems: 'flex-end'
-  };
-
-  const tabsContainerStyle = {
-    display: 'flex',
-    gap: '2px',
-    alignItems: 'flex-end'
-  };
-
-  const spacerStyle = {
-    width: '16px' // Espacement entre les onglets et le bouton mode
-  };
-
-  const navButtonStyle = (isActive: boolean, isHovered: boolean = false) => ({
-    padding: '8px 24px', // Augmenter le padding horizontal pour des onglets plus larges
-    background: isActive
-      ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
-      : (isHovered
-          ? (isDarkMode ? '#4b5563' : '#e2e8f0')
-          : (isDarkMode ? '#374151' : '#f1f5f9')),
-    color: isActive ? '#ffffff' : (isDarkMode ? '#f1f5f9' : '#374151'),
-    border: 'none',
-    borderRadius: '8px 8px 0 0', // Style onglet Windows - arrondi seulement en haut
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    borderBottom: isActive
-      ? `2px solid ${isDarkMode ? '#4b5563' : '#6b7280'}`
-      : (isHovered
-          ? `2px solid ${isDarkMode ? '#6b7280' : '#9ca3af'}`
-          : `2px solid transparent`),
-    minWidth: '100px', // Largeur minimale pour assurer une taille cohérente
-    transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
-    boxShadow: isHovered
-      ? '0 2px 8px rgba(0, 0, 0, 0.15)'
-      : 'none'
-  });
-
-  const themeButtonStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px 16px',
-    backgroundColor: isDarkMode ? '#374151' : '#f1f5f9',
-    border: `1px solid ${isDarkMode ? '#4b5563' : '#d1d5db'}`,
-    borderRadius: '8px',
-    color: isDarkMode ? '#f1f5f9' : '#374151',
-    fontSize: '14px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
-  };
-
-  const getHeaderIcon = () => {
-    if (showImport) {
-      return '📥';
+    if (isActive) {
+      return `${baseClasses} bg-gradient-to-r from-gray-500 to-gray-600 text-white border-b-gray-600 dark:border-b-gray-500`;
     }
-    if (showTemplates) {
-      return '📚';
-    }
-    if (showExport) {
-      return '📤';
-    }
-    return '🚀';
+
+    return `${baseClasses} ${isDarkMode
+      ? 'bg-gray-700 text-gray-100 border-b-transparent hover:bg-gray-600 hover:border-b-gray-500'
+      : 'bg-gray-50 text-gray-700 border-b-transparent hover:bg-gray-200 hover:border-b-gray-400'
+    }`;
   };
+
+ 
 
   return (
-    <div style={headerStyle}>
-      <div style={titleStyle}>
+    <header className={`
+      ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}
+      px-4 py-2 border-b flex justify-between items-center sticky top-0 z-[100]
+      ${isDarkMode ? 'shadow-[0_2px_8px_rgba(0,0,0,0.3)]' : 'shadow-[0_2px_8px_rgba(0,0,0,0.1)]'}
+    `}>
+      <div className="flex items-center gap-3">
         <img
           src="./images/logo.png"
-          alt="Logo"
-          style={{
-            height: '48px',
-            width: 'auto',
-            marginRight: '12px',
-            objectFit: 'contain'
-          }}
+          alt="MDtoPDF Pro - Logo"
+          className="h-12 w-auto mr-3 object-contain"
         />
+        <h1 className={`m-0 text-2xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+          MDtoPDF Pro
+        </h1>
       </div>
 
-      <div style={navigationStyle}>
+      <nav className="flex gap-[2px] items-end">
         {/* Conteneur des onglets Windows */}
-        <div style={tabsContainerStyle}>
+        <div className="flex gap-[2px] items-end">
           <button
-            style={navButtonStyle(!showTemplates && !showExport && !showImport, hoveredTab === 'editor')}
+            className={getTabButtonClasses(!showTemplates && !showExport && !showImport)}
             onClick={() => onTabChange('editor')}
             onMouseEnter={() => setHoveredTab('editor')}
             onMouseLeave={() => setHoveredTab(null)}
           >
-            Éditeur
+            <PencilIcon className="w-4 h-4 mr-1.5 flex-shrink-0" aria-hidden="true" />
+            <span>Éditeur</span>
           </button>
           <button
-            style={navButtonStyle(showImport, hoveredTab === 'import')}
+            className={getTabButtonClasses(showImport)}
             onClick={() => onTabChange('import')}
             onMouseEnter={() => setHoveredTab('import')}
             onMouseLeave={() => setHoveredTab(null)}
           >
-            Importer
+            <ArrowDownTrayIcon className="w-4 h-4 mr-1.5 flex-shrink-0" aria-hidden="true" />
+            <span>Importer</span>
           </button>
           <button
-            style={navButtonStyle(showTemplates, hoveredTab === 'templates')}
+            className={getTabButtonClasses(showTemplates)}
             onClick={() => onTabChange('templates')}
             onMouseEnter={() => setHoveredTab('templates')}
             onMouseLeave={() => setHoveredTab(null)}
           >
-            Templates
+            <BookOpenIcon className="w-4 h-4 mr-1.5 flex-shrink-0" aria-hidden="true" />
+            <span>Templates</span>
           </button>
         </div>
 
         {/* Espacement entre les onglets et le bouton mode */}
-        <div style={spacerStyle} />
+        <div className="w-4" />
 
         <button
-          style={themeButtonStyle}
+          className={`
+            flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer
+            transition-all duration-200 outline-none
+            ${isDarkMode
+              ? 'bg-gray-700 border-gray-600 text-gray-100'
+              : 'bg-gray-50 border-gray-300 text-gray-700'
+            }
+            border
+          `}
           onClick={onThemeToggle}
         >
           {isDarkMode ? (
             <>
-              <SunIcon style={{ width: '16px', height: '16px' }} />
-              Clair
+              <SunIcon className="w-4 h-4" aria-hidden="true" />
+              <span>Clair</span>
             </>
           ) : (
             <>
-              <MoonIcon style={{ width: '16px', height: '16px' }} />
-              Sombre
+              <MoonIcon className="w-4 h-4" aria-hidden="true" />
+              <span>Sombre</span>
             </>
           )}
         </button>
-      </div>
-    </div>
+
+        {onAdvancedExport && (
+          <button
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-500 border-blue-500 rounded-lg text-white text-sm font-semibold cursor-pointer transition-all duration-200 outline-none hover:bg-blue-600 border"
+            onClick={onAdvancedExport}
+            title="Export avancé multi-formats"
+          >
+            <ArchiveBoxIcon className="w-4 h-4 mr-1.5 flex-shrink-0" aria-hidden="true" />
+            <span>Export+</span>
+          </button>
+        )}
+      </nav>
+    </header>
   );
 };
 

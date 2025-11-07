@@ -1,12 +1,15 @@
 export default async function handler(req, res) {
-  try {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+  try {  try {
     const { markdown, fileName = "document" } = req.body;
     if (!markdown) return res.status(400).send("No markdown provided");
 
-    res.setHeader("Content-Type", "text/markdown");
-    res.setHeader("Content-Disposition", `attachment; filename=${fileName}.md`);
-    res.send(markdown);
   } catch (err) {
+    console.error('Markdown export error:', err);
+    res.status(500).json({ error: "Markdown export failed" });
+  }  } catch (err) {
     res.status(500).json({ error: "Markdown export failed", details: err.message });
   }
 }

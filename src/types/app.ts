@@ -37,6 +37,10 @@ export interface Template {
   styles: TemplateStyles;
   layout: TemplateLayout;
   preview: string;
+  content?: string;
+  style?: any;
+  colors: string[];
+  isPro: boolean;
 }
 
 export interface TemplateStyles {

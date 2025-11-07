@@ -127,10 +127,34 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     const textarea = textareaRef.current;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
+    const selectedText = markdown.substring(start, end);
 
-    const newValue = markdown.substring(0, start) + text + markdown.substring(end);
-    const newPosition = start + text.length;
+    let newText = text;
+    let newPosition;
 
+    if (replaceSelection && selectedText) {
+      // Si du texte est sélectionné et qu'on veut formater, déterminer le format
+      if (text === '****') {
+        // Cas spécial pour le gras : entourer le texte sélectionné
+        newText = `**${selectedText}**`;
+      } else if (text === '**') {
+        // Cas spécial pour l'italique : entourer le texte sélectionné
+        newText = `*${selectedText}*`;
+      } else if (text === '``') {
+        // Cas spécial pour le code en ligne : entourer le texte sélectionné
+        newText = `\`${selectedText}\``;
+      } else {
+        // Autres cas : remplacer la sélection
+        newText = text;
+      }
+      newPosition = start + newText.length;
+    } else {
+      // Comportement par défaut : insérer le texte sans modification
+      newText = text;
+      newPosition = start + text.length;
+    }
+
+    const newValue = markdown.substring(0, start) + newText + markdown.substring(end);
     onChange(newValue);
 
     // Repositionner le curseur
@@ -140,9 +164,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     }, 0);
   };
   return (
-    <div style={editorContainerStyle}>
+    <section style={editorContainerStyle} aria-labelledby="editor-title">
       <div style={headerStyle}>
-        <h3 style={{
+        <h2 id="editor-title" style={{
           margin: 0,
           fontSize: '18px',
           fontWeight: '700',
@@ -151,9 +175,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           alignItems: 'center',
           gap: '8px'
         }}>
-          <PencilIcon style={{ width: '18px', height: '18px' }} />
+          <PencilIcon style={{ width: '18px', height: '18px' }} aria-hidden="true" />
           Éditeur Markdown
-        </h3>
+        </h2>
       </div>
 
       {/* Toolbar */}
@@ -165,28 +189,54 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       />
 
       {/* Conteneur A4 */}
-      <div style={a4ContainerStyle}>
+      <div style={a4ContainerStyle} role="region" aria-label="Zone d'édition Markdown">
         <div style={editorStyle}>
-          <textarea
-            ref={textareaRef}
-            value={markdown}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={handleTextareaFocus}
-            onBlur={handleTextareaBlur}
-            placeholder="# Entrez votre contenu Markdown ici..."
-            style={textareaStyle}
-          />
+          <div style={{ position: 'relative' }}>
+            <label htmlFor="markdown-textarea" style={{
+              position: 'absolute',
+              left: '-9999px',
+              width: '1px',
+              height: '1px',
+              overflow: 'hidden'
+            }}>
+              Éditeur de texte Markdown
+            </label>
+            <textarea
+              id="markdown-textarea"
+              ref={textareaRef}
+              value={markdown}
+              onChange={(e) => onChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={handleTextareaFocus}
+              onBlur={handleTextareaBlur}
+              placeholder="# Entrez votre contenu Markdown ici..."
+              aria-label="Contenu Markdown - Utilisez les raccourcis clavier Ctrl+B pour gras, Ctrl+I pour italique"
+              aria-describedby="markdown-help"
+              style={textareaStyle}
+            />
+            <div id="markdown-help" style={{
+              position: 'absolute',
+              left: '-9999px',
+              width: '1px',
+              height: '1px',
+              overflow: 'hidden'
+            }}>
+              Raccourcis clavier disponibles : Ctrl+B pour gras, Ctrl+I pour italique, Ctrl+K pour lien, Ctrl+Shift+C pour code
+            </div>
+          </div>
 
           {showPreview && (
             <div
+              role="region"
+              aria-label="Aperçu du Markdown"
+              aria-live="polite"
               style={previewStyle}
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked(markdown) as string) }}
             />
           )}
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

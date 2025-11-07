@@ -15,9 +15,13 @@ async function exportFile(markdown: string, format: "pdf" | "html" | "md", fileN
   a.href = url;
   a.download = `${fileName}.${format}`;
   a.click();
-  a.remove();
+  
+  // Revoke the URL after a short delay to ensure download starts
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    a.remove();
+  }, 100);
 }
-
 export const useExport = () =>
   useMutation({
     mutationFn: ({ markdown, format, fileName }: { markdown: string; format: "pdf" | "html" | "md"; fileName?: string }) =>

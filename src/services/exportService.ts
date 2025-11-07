@@ -69,17 +69,10 @@ export class ExportService {
       throw new Error('Preview HTML is required for preview HTML export');
     }
 
-    // Utiliser le preview HTML qui contient les conteneurs de pages
-    console.log('Export HTML : utilisation du preview HTML...');
-    console.log('Preview HTML contient les conteneurs de pages?', options.previewHTML.includes('class="page"'));
-
     const multiPageHTML = this.generateMultiPageHTMLFromPreview(options.previewHTML, options.filename);
-    console.log('HTML multi-page généré, longueur:', multiPageHTML.length);
     const blob = new Blob([multiPageHTML], { type: 'text/html;charset=utf-8' });
     saveAs(blob, `${options.filename}.html`);
-    console.log('Export HTML terminé avec succès');
   }
-
   private generateMultiPageHTMLFromPreview(htmlContent: string, fileName: string): string {
     const pageTitle = fileName || "Document";
 

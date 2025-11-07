@@ -120,11 +120,10 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
   };
 
   const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.backgroundColor = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+    e.currentTarget.style.background = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
     e.currentTarget.style.borderColor = '#6b7280';
     e.currentTarget.style.color = '#ffffff';
   };
-
   const handleButtonLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.style.backgroundColor = '#ffffff';
     e.currentTarget.style.borderColor = '#e2e8f0';

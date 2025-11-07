@@ -1,17 +1,7 @@
 import React, { useState } from 'react';
 import { SparklesIcon, PlusIcon } from '@heroicons/react/24/outline';
-import TemplateManager from './TemplateManager';
-
-interface Template {
-  id: string;
-  name: string;
-  description: string;
-  colors: string[];
-  isPro: boolean;
-  category: 'modern' | 'classic' | 'academic' | 'creative';
-  content?: string;
-  style?: any;
-}
+import TemplateManager, { TemplateWithContent } from './TemplateManager';
+import { Template } from '@/types/app';
 
 interface TemplateSelectorProps {
   templates: Template[];
@@ -30,8 +20,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   onApplyTemplate
 }) => {
   const [showManager, setShowManager] = useState(false);
-  const [customTemplates, setCustomTemplates] = useState<any[]>([]);
-  const panelStyle = {
+  const [customTemplates, setCustomTemplates] = useState<TemplateWithContent[]>([]);  const panelStyle = {
     backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     padding: '24px',
     borderRadius: '12px',

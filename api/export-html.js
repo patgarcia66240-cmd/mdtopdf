@@ -22,14 +22,25 @@ function splitIntoPages(htmlContent) {
     );
   }
 
-  return htmlContent.split(/<!--\s*pagebreak\s*-->/gi);
+  return htmlContent
+    .split(/<!--\s*pagebreak\s*-->/gi)
+    .map((page) => DOMPurify.sanitize(page.trim()));
 }
-
 /**
  * Génère le squelette HTML complet avec style multi-pages A4
- */
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
 function generateMultiPageHTML(pages, fileName) {
-  const pageTitle = fileName || "Document";
+  const pageTitle = escapeHtml(fileName || "Document");
 
   const htmlHeader = `<!DOCTYPE html>
 <html lang="fr">
@@ -197,6 +208,21 @@ function generateMultiPageHTML(pages, fileName) {
   // Si vide
   if (!pagesHTML.trim()) {
     pagesHTML = `
+    const { markdown, fileName: rawFileName = "document", previewHTML } = req.body;
+    // Sanitize filename: remove path separators and limit to alphanumeric, spaces, hyphens, underscores
+    const fileName = String(rawFileName)
+      .replace(/[\/\\]/g, '')
+      .replace(/[^a-zA-Z0-9\s_-]/g, '')
+      .substring(0, 100)
+      .trim() || 'document';  <div class="page-header">Page 1</div>
+  <div class="page-content"><p>Contenu vide</p></div>
+  <div class="page-footer">${pageTitle} - Page 1</div>
+</div>`;
+  }
+
+  return htmlHeader + pagesHTML + htmlFooter;
+}  if (!pagesHTML.trim()) {
+    pagesHTML = `
 <div class="page">
   <div class="page-header">Page 1</div>
   <div class="page-content"><p>Contenu vide</p></div>
@@ -205,7 +231,57 @@ function generateMultiPageHTML(pages, fileName) {
   }
 
   return htmlHeader + pagesHTML + htmlFooter;
-}
+}  if (!pagesHTML.trim()) {
+    pagesHTML = `
+<div class="page">
+  <div class="page-header">Page 1</div>
+  <div class="page-content"><p>Contenu vide</p></div>
+  <div class="page-footer">${pageTitle} - Page 1</div>
+</div>`;
+  }
+
+  return htmlHeader + pagesHTML + htmlFooter;
+}  if (!pagesHTML.trim()) {
+    pagesHTML = `
+<div class="page">
+  <div class="page-header">Page 1</div>
+  <div class="page-content"><p>Contenu vide</p></div>
+  <div class="page-footer">${pageTitle} - Page 1</div>
+</div>`;
+  }
+
+  return htmlHeader + pagesHTML + htmlFooter;
+}  if (!pagesHTML.trim()) {
+    pagesHTML = `
+<div class="page">
+  <div class="page-header">Page 1</div>
+  <div class="page-content"><p>Contenu vide</p></div>
+  <div class="page-footer">${pageTitle} - Page 1</div>
+</div>`;
+  }
+
+  return htmlHeader + pagesHTML + htmlFooter;
+}  if (!pagesHTML.trim()) {
+    pagesHTML = `
+<div class="page">
+  <div class="page-header">Page 1</div>
+  <div class="page-content"><p>Contenu vide</p></div>
+  <div class="page-footer">${pageTitle} - Page 1</div>
+</div>`;
+  }
+
+  return htmlHeader + pagesHTML + htmlFooter;
+}  if (!pagesHTML.trim()) {
+    pagesHTML = `
+<div class="page">
+  <div class="page-header">Page 1</div>
+  <div class="page-content"><p>Contenu vide</p></div>
+  <div class="page-footer">${pageTitle} - Page 1</div>
+</div>`;
+  }
+
+  return htmlHeader + pagesHTML + htmlFooter;
+}}
 
 /**
  * --- ROUTE API ---

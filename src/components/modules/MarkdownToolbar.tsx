@@ -33,7 +33,7 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
 
   const insertFormatting = (before: string, after: string = '') => {
     const text = `${before}${after}`;
-    onInsertText(text, false);
+    onInsertText(text, true); // true pour indiquer qu'on veut gérer la sélection
   };
 
   const insertLink = () => {
@@ -98,6 +98,7 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
       <div style={toolbarStyle}>
         {/* Formatting */}
         <button
+          type="button"
           style={buttonStyle(false, hoveredButton === 'bold')}
           onClick={() => insertFormatting('**', '**')}
           onMouseEnter={() => setHoveredButton('bold')}
@@ -106,7 +107,6 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
         >
           <BoldIcon style={{ width: '16px', height: '16px' }} />
         </button>
-
         <button
           style={buttonStyle(false, hoveredButton === 'italic')}
           onClick={() => insertFormatting('*', '*')}
@@ -302,16 +302,20 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
             </h3>
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '4px',
-                color: isDarkMode ? '#f1f5f9' : '#374151',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}>
+              <label 
+                style={{
+                  display: 'block',
+                  marginBottom: '4px',
+                  color: isDarkMode ? '#f1f5f9' : '#374151',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+                htmlFor="link-text-input"
+              >
                 Texte du lien
               </label>
               <input
+                id="link-text-input"
                 type="text"
                 value={linkText}
                 onChange={(e) => setLinkText(e.target.value)}
@@ -327,7 +331,6 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
                 }}
               />
             </div>
-
             <div style={{ marginBottom: '24px' }}>
               <label style={{
                 display: 'block',
