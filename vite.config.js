@@ -46,8 +46,5 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'jspdf', 'html2canvas', '@tanstack/react-query', 'zustand'],
-  },
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
   }
 })

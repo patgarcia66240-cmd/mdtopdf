@@ -2,7 +2,6 @@ import React from 'react';
 import { Cog6ToothIcon, SwatchIcon, MagnifyingGlassIcon, MinusIcon, PlusIcon, ArrowPathIcon, DocumentTextIcon, PhotoIcon, ArrowsPointingOutIcon, AdjustmentsHorizontalIcon, SparklesIcon, BookOpenIcon, AcademicCapIcon, CircleStackIcon } from '@heroicons/react/24/outline';
 import FileNameInput from '../ui/FileNameInput';
 import { PDFOptions } from '../../types/app';
-import { display } from 'html2canvas/dist/types/css/property-descriptors/display';
 
 interface PDFControlPanelProps {
   pdfOptions: PDFOptions;
