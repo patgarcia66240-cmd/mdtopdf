@@ -25,18 +25,22 @@ const ZoomControls: React.FC<ZoomControlsProps> = ({
     fontSize: '12px'
   };
 
+  const createHoverHandlers = (hoverBg: string, defaultBg: string, extraTransform = '', resetTransform = '') => ({
+    onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.backgroundColor = hoverBg;
+      e.currentTarget.style.transform = `translateY(-1px)${extraTransform}`;
+      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.backgroundColor = defaultBg;
+      e.currentTarget.style.transform = `translateY(0)${resetTransform}`;
+      e.currentTarget.style.boxShadow = 'none';
+    }
+  });
+
   const handleZoomOutClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     onZoomChange(Math.max(50, previewZoom - 10));
-    // Effet hover manuel
-    e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#e5e7eb';
-    e.currentTarget.style.transform = 'scale(0.95)';
-    setTimeout(() => {
-      e.currentTarget.style.backgroundColor = isDarkMode ? '#0f172a' : '#ffffff';
-      e.currentTarget.style.transform = 'scale(1)';
-    }, 150);
-  };
-
-  const handleZoomInClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  };  const handleZoomInClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     onZoomChange(Math.min(150, previewZoom + 10));
     // Effet hover manuel
     e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#e5e7eb';
@@ -67,16 +71,10 @@ const ZoomControls: React.FC<ZoomControlsProps> = ({
     }}>
       <button
         onClick={handleZoomOutClick}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#e5e7eb';
-          e.currentTarget.style.transform = 'translateY(-1px)';
-          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode ? '#0f172a' : '#ffffff';
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
+        {...createHoverHandlers(
+          isDarkMode ? '#4b5563' : '#e5e7eb',
+          isDarkMode ? '#0f172a' : '#ffffff'
+        )}
         style={baseButtonStyle}
         title="Zoom arrière"
       >
@@ -99,16 +97,10 @@ const ZoomControls: React.FC<ZoomControlsProps> = ({
 
       <button
         onClick={handleZoomInClick}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#e5e7eb';
-          e.currentTarget.style.transform = 'translateY(-1px)';
-          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode ? '#0f172a' : '#ffffff';
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
+        {...createHoverHandlers(
+          isDarkMode ? '#4b5563' : '#e5e7eb',
+          isDarkMode ? '#0f172a' : '#ffffff'
+        )}
         style={baseButtonStyle}
         title="Zoom avant"
       >
@@ -117,16 +109,11 @@ const ZoomControls: React.FC<ZoomControlsProps> = ({
 
       <button
         onClick={handleResetClick}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#e2e8f0';
-          e.currentTarget.style.transform = 'translateY(-1px) rotate(90deg)';
-          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode ? '#1e293b' : '#f1f5f9';
-          e.currentTarget.style.transform = 'translateY(0) rotate(0deg)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
+        {...createHoverHandlers(
+          isDarkMode ? '#374151' : '#e2e8f0',
+          isDarkMode ? '#1e293b' : '#f1f5f9',
+          ' rotate(90deg)'
+        )}
         style={{
           ...baseButtonStyle,
           padding: '4px 8px',
@@ -141,8 +128,7 @@ const ZoomControls: React.FC<ZoomControlsProps> = ({
           height: '12px',
           transition: 'transform 0.3s ease'
         }} />
-      </button>
-    </div>
+      </button>    </div>
   );
 };
 

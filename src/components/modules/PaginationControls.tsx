@@ -77,15 +77,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
     color: isDarkMode ? '#6b7280' : '#9ca3af',
   };
 
-  // Style du texte d'information
-  const infoStyle = {
-    fontSize: '12px',
-    color: isDarkMode ? '#94a3b8' : '#64748b',
-    margin: '0 6px',
-    whiteSpace: 'nowrap' as const,
-    fontWeight: '500',
-  };
-
+  
   // Déterminer si les boutons de navigation doivent être désactivés en mode "voir tout"
   const isNavigationDisabled = viewMode === 'all' || totalPages <= 1;
 
@@ -97,7 +89,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         onClick={() => !isNavigationDisabled && currentPage > 1 && handlePageChange(currentPage - 1)}
         disabled={isNavigationDisabled || currentPage <= 1}
         title="Page précédente"
-      >
+        aria-label={`Go to page ${currentPage + 1}`}      >
         <ChevronLeftIcon style={{ width: '12px', height: '12px' }} />
         Précédent
       </button>
@@ -109,6 +101,8 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         onClick={() => !isNavigationDisabled && currentPage < totalPages && handlePageChange(currentPage + 1)}
         disabled={isNavigationDisabled || currentPage >= totalPages}
         title="Page suivante"
+        aria-label={`Go to page ${currentPage - 1}`}
+        
       >
         Suivant
         <ChevronRightIcon style={{ width: '12px', height: '12px' }} />

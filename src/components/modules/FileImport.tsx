@@ -143,9 +143,10 @@ const FileImport: React.FC<FileImportProps> = ({
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(false);
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
   };
-
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
@@ -160,43 +161,50 @@ const FileImport: React.FC<FileImportProps> = ({
     if (files) {
       setError(null);
       processFiles(Array.from(files));
+      e.target.value = '';
     }
   };
 
   const processFiles = async (files: File[]) => {
-    for (const file of files) {
-      // Vérifier que c'est un fichier markdown
+  const results = await Promise.allSettled(
+    files.map(async (file) => {
+      // Validation
       const isMarkdown = file.name.toLowerCase().endsWith('.md') ||
                          file.name.toLowerCase().endsWith('.markdown');
-
       if (!isMarkdown) {
-        setError(`Le fichier "${file.name}" n'est pas un fichier Markdown (.md, .markdown)`);
-        continue;
+        throw new Error(`Le fichier "${file.name}" n'est pas un fichier Markdown (.md, .markdown)`);
       }
 
-      // Vérifier la taille (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
-        setError(`Le fichier "${file.name}" est trop volumineux (max 5MB)`);
-        continue;
+        throw new Error(`Le fichier "${file.name}" est trop volumineux (max 5MB)`);
       }
 
-      try {
-        const content = await readFile(file);
-        const importedFile: ImportedFile = {
-          name: file.name,
-          size: file.size,
-          content,
-          importedAt: new Date()
-        };
+      const content = await readFile(file);
+      return {
+        name: file.name,
+        size: file.size,
+        content,
+        importedAt: new Date()
+      };
+    })
+  );
 
-        setImportedFiles(prev => [importedFile, ...prev].slice(0, 10)); // Garder seulement les 10 derniers
-        onFileImport(content, file.name);
-      } catch (error) {
-        setError(`Erreur lors de la lecture du fichier "${file.name}"`);
-      }
+  // Process results
+  const successfulImports: ImportedFile[] = [];
+  results.forEach((result, _) => {
+    if (result.status === 'fulfilled') {
+      successfulImports.push(result.value);
+      onFileImport(result.value.content, result.value.name);
+    } else {
+      setError(result.reason.message);
     }
-  };
+  });
+
+  if (successfulImports.length > 0) {
+    setImportedFiles(prev => [...successfulImports, ...prev].slice(0, 10));
+  }
+};
 
   const readFile = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -264,10 +272,19 @@ const FileImport: React.FC<FileImportProps> = ({
       {/* Drop Zone */}
       <div
         style={dropZoneStyle}
+        role="button"
+        tabIndex={0}
+        aria-label="Zone de dépôt de fichiers Markdown"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
       >
         <FolderOpenIcon style={iconStyle} />
         <div style={textStyle}>
@@ -276,7 +293,7 @@ const FileImport: React.FC<FileImportProps> = ({
         <div style={subTextStyle}>
           ou cliquez pour parcourir vos fichiers
         </div>
-        <button style={buttonStyle}>
+        <button style={buttonStyle} onClick={(e) => e.stopPropagation()}>
           <DocumentArrowDownIcon style={{ width: '16px', height: '16px' }} />
           Choisir un fichier
         </button>
@@ -288,7 +305,6 @@ const FileImport: React.FC<FileImportProps> = ({
           Formats supportés : .md, .markdown (max 5MB)
         </div>
       </div>
-
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -306,10 +322,10 @@ const FileImport: React.FC<FileImportProps> = ({
           alignItems: 'center',
           gap: '8px',
           padding: '12px 16px',
-          backgroundColor: '#fef2f2',
-          border: '1px solid #fecaca',
+          backgroundColor: isDarkMode ? '#7f1d1d' : '#fef2f2',
+          border: `1px solid ${isDarkMode ? '#991b1b' : '#fecaca'}`,
           borderRadius: '8px',
-          color: '#dc2626',
+          color: isDarkMode ? '#fca5a5' : '#dc2626',
           marginBottom: '20px'
         }}>
           <ExclamationTriangleIcon style={{ width: '16px', height: '16px' }} />
@@ -329,7 +345,6 @@ const FileImport: React.FC<FileImportProps> = ({
           </button>
         </div>
       )}
-
       {/* Imported Files List */}
       {importedFiles.length > 0 && (
         <div>

@@ -26,7 +26,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   templates,
   selectedTemplate,
   onTemplateSelect,
-  onCreateTemplate,
   isDarkMode,
   onApplyTemplate
 }) => {
@@ -62,7 +61,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     gap: '16px'
   };
 
-  const templateCardStyle = (isSelected: boolean, isPro: boolean) => ({
+  const templateCardStyle = (isSelected: boolean) => ({
     backgroundColor: isSelected ? (isDarkMode ? '#1e3a5f' : '#eff6ff') : (isDarkMode ? '#0f172a' : '#ffffff'),
     border: isSelected ? '2px solid #6b7280' : `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`,
     borderRadius: '12px',
@@ -132,7 +131,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     onTemplateSelect(templateId);
 
     // Si le template a du contenu, l'appliquer
-    const template = templates.find(t => t.id === templateId);
+    const template = [...templates, ...customTemplates].find(t => t.id === templateId);
     if (template?.content && onApplyTemplate) {
       onApplyTemplate(template.content, template.style);
     }
@@ -218,7 +217,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         {[...templates, ...customTemplates].map((template) => (
           <div
             key={template.id}
-            style={templateCardStyle(selectedTemplate === template.id, template.isPro)}
+            style={templateCardStyle(selectedTemplate === template.id)}
             onClick={() => handleCardClick(template.id)}
             onMouseEnter={(e) => handleCardHover(e, selectedTemplate === template.id)}
             onMouseLeave={(e) => handleCardLeave(e, selectedTemplate === template.id)}

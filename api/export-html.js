@@ -1,268 +1,250 @@
 import { remark } from "remark";
 import html from "remark-html";
 import gfm from "remark-gfm";
+import { parse } from "node-html-parser";
+import DOMPurify from "isomorphic-dompurify";
 
-export default async function handler(req, res) {
-  try {
-    const { markdown, fileName = "document", previewHTML } = req.body;
+// --- Instance du moteur Markdown (créée une seule fois)
+const markdownProcessor = remark().use(gfm).use(html);
 
-    if (!markdown && !previewHTML) {
-      return res.status(400).send("No markdown or preview HTML provided");
-    }
+/**
+ * Découpe un HTML en pages selon :
+ * - des balises <div class="page"> (preview)
+ * - ou des commentaires <!-- pagebreak -->
+ */
+function splitIntoPages(htmlContent) {
+  const root = parse(htmlContent);
+  const pageElements = root.querySelectorAll("div.page");
 
-    let htmlContent;
-    let pages;
-
-    if (previewHTML) {
-      // Utiliser le HTML du preview fourni
-      htmlContent = previewHTML;
-
-      // Diviser le contenu en pages en utilisant les sauts de page ou les séparateurs de pages
-      // Chercher les conteneurs de pages dans le preview HTML
-      const pageContainers = htmlContent.match(/<div[^>]*class="[^"]*page[^"]*"[^>]*>[\s\S]*?<\/div>/gi);
-
-      if (pageContainers && pageContainers.length > 0) {
-        // Extraire le contenu de chaque page
-        pages = pageContainers.map(pageContainer => {
-          // Nettoyer le conteneur de page pour garder seulement le contenu
-          return pageContainer
-            .replace(/<div[^>]*class="[^"]*page[^"]*"[^>]*>/, '')
-            .replace(/<\/div>$/, '')
-            .trim();
-        });
-      } else {
-        // Fallback : utiliser les sauts de page HTML standards
-        pages = htmlContent.split(/<!--\s*pagebreak\s*-->/gi);
-      }
-    } else {
-      // Fallback : traiter le markdown pour générer du HTML multi-pages
-      const result = await remark().use(gfm).use(html).process(markdown);
-      htmlContent = result.toString();
-      pages = htmlContent.split(/<!--\s*pagebreak\s*-->/gi);
-    }
-
-    // Générer le HTML avec des pages séparées
-    const multiPageHTML = generateMultiPageHTML(pages, fileName);
-
-    res.setHeader("Content-Type", "text/html");
-    res.setHeader("Content-Disposition", `attachment; filename=${fileName}.html`);
-    res.send(multiPageHTML);
-  } catch (err) {
-    res.status(500).json({ error: "HTML export failed", details: err.message });
+  if (pageElements.length > 0) {
+    return pageElements.map((pageEl) =>
+      DOMPurify.sanitize(pageEl.innerHTML.trim())
+    );
   }
+
+  return htmlContent.split(/<!--\s*pagebreak\s*-->/gi);
 }
 
+/**
+ * Génère le squelette HTML complet avec style multi-pages A4
+ */
 function generateMultiPageHTML(pages, fileName) {
   const pageTitle = fileName || "Document";
 
   const htmlHeader = `<!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${pageTitle}</title>
-    <style>
-        @page {
-            size: A4;
-            margin: 20mm;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            line-height: 1.6;
-            color: #1e293b;
-            margin: 0;
-            padding: 20px;
-            background: #ffffff;
-        }
-
-        .page {
-            width: 210mm;
-            min-height: 297mm;
-            background: white;
-            margin: 0 auto 20px auto;
-            padding: 20mm;
-            border: 1px solid #e2e8f0;
-            box-sizing: border-box;
-            page-break-after: always;
-            position: relative;
-        }
-
-        .page:last-child {
-            page-break-after: avoid;
-            margin-bottom: 0;
-        }
-
-        .page-header {
-            position: absolute;
-            top: 10mm;
-            left: 20mm;
-            right: 20mm;
-            height: 15mm;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 12px;
-            color: #64748b;
-            font-weight: 600;
-        }
-
-        .page-content {
-            margin-top: 30mm;
-            margin-bottom: 20mm;
-        }
-
-        .page-footer {
-            position: absolute;
-            bottom: 10mm;
-            left: 20mm;
-            right: 20mm;
-            height: 10mm;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 11px;
-            color: #94a3b8;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            color: #1e293b;
-            margin-top: 1.5em;
-            margin-bottom: 0.5em;
-        }
-
-        h1 { font-size: 28px; font-weight: 700; }
-        h2 { font-size: 22px; font-weight: 600; }
-        h3 { font-size: 18px; font-weight: 600; }
-        h4 { font-size: 16px; font-weight: 600; }
-
-        p {
-            margin-bottom: 1em;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 1em 0;
-        }
-
-        th, td {
-            border: 1px solid #e2e8f0;
-            padding: 8px 12px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f8fafc;
-            font-weight: 600;
-        }
-
-        code {
-            background-color: #f1f5f9;
-            padding: 2px 4px;
-            border-radius: 4px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.9em;
-        }
-
-        pre {
-            background-color: #f1f5f9;
-            padding: 16px;
-            border-radius: 8px;
-            overflow-x: auto;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.9em;
-        }
-
-        blockquote {
-            border-left: 4px solid #6b7280;
-            padding-left: 16px;
-            margin: 1em 0;
-            color: #64748b;
-            font-style: italic;
-        }
-
-        ul, ol {
-            margin: 1em 0;
-            padding-left: 24px;
-        }
-
-        a {
-            color: #6b7280;
-            text-decoration: none;
-            border-bottom: 1px solid #6b7280;
-        }
-
-        a:hover {
-            color: #4b5563;
-            border-bottom-color: #4b5563;
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 1em 0;
-        }
-
-        @media print {
-            body {
-                padding: 0;
-                background: white;
-            }
-            .page {
-                margin: 0;
-                border: none;
-                box-shadow: none;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${pageTitle}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 20mm;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      color: #1e293b;
+      margin: 0;
+      padding: 20px;
+      background: #ffffff;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: white;
+      margin: 0 auto 20px auto;
+      padding: 20mm;
+      border: 1px solid #e2e8f0;
+      box-sizing: border-box;
+      page-break-after: always;
+      position: relative;
+    }
+    .page:last-child {
+      page-break-after: avoid;
+      margin-bottom: 0;
+    }
+    .page-header {
+      position: absolute;
+      top: 10mm;
+      left: 20mm;
+      right: 20mm;
+      height: 15mm;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+    .page-content {
+      margin-top: 30mm;
+      margin-bottom: 20mm;
+    }
+    .page-footer {
+      position: absolute;
+      bottom: 10mm;
+      left: 20mm;
+      right: 20mm;
+      height: 10mm;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      color: #1e293b;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+    h1 { font-size: 28px; font-weight: 700; }
+    h2 { font-size: 22px; font-weight: 600; }
+    h3 { font-size: 18px; font-weight: 600; }
+    h4 { font-size: 16px; font-weight: 600; }
+    p { margin-bottom: 1em; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1em 0;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th {
+      background-color: #f8fafc;
+      font-weight: 600;
+    }
+    code {
+      background-color: #f1f5f9;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.9em;
+    }
+    pre {
+      background-color: #f1f5f9;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.9em;
+    }
+    blockquote {
+      border-left: 4px solid #6b7280;
+      padding-left: 16px;
+      margin: 1em 0;
+      color: #64748b;
+      font-style: italic;
+    }
+    ul, ol {
+      margin: 1em 0;
+      padding-left: 24px;
+    }
+    a {
+      color: #6b7280;
+      text-decoration: none;
+      border-bottom: 1px solid #6b7280;
+    }
+    a:hover {
+      color: #4b5563;
+      border-bottom-color: #4b5563;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 1em 0;
+    }
+    @media print {
+      body {
+        padding: 0;
+        background: white;
+      }
+      .page {
+        margin: 0;
+        border: none;
+        box-shadow: none;
+        page-break-after: always;
+      }
+    }
+  </style>
 </head>
 <body>`;
 
-  const htmlFooter = `
-</body>
-</html>`;
+  const htmlFooter = `</body></html>`;
 
-  let pagesHTML = '';
+  // Construction des pages
+  let pagesHTML = pages
+    .map((pageContent, i) => {
+      const content = pageContent.trim();
+      const pageNum = i + 1;
+      if (!content) return "";
+      return `
+<div class="page" data-page="${pageNum}">
+  <div class="page-header">Page ${pageNum}</div>
+  <div class="page-content">${content}</div>
+  <div class="page-footer">${pageTitle} - Page ${pageNum}</div>
+</div>`;
+    })
+    .join("\n");
 
-  pages.forEach((pageContent, index) => {
-    const pageNumber = index + 1;
-    const cleanContent = pageContent.trim();
-
-    if (cleanContent) {
-      pagesHTML += `
-    <div class="page">
-        <div class="page-header">
-            Page ${pageNumber}
-        </div>
-        <div class="page-content">
-            ${cleanContent}
-        </div>
-        <div class="page-footer">
-            ${pageTitle} - Page ${pageNumber}
-        </div>
-    </div>`;
-    }
-  });
-
-  // Si aucune page valide, créer une page vide
-  if (!pagesHTML) {
+  // Si vide
+  if (!pagesHTML.trim()) {
     pagesHTML = `
-    <div class="page">
-        <div class="page-header">
-            Page 1
-        </div>
-        <div class="page-content">
-            <p>Contenu vide</p>
-        </div>
-        <div class="page-footer">
-            ${pageTitle} - Page 1
-        </div>
-    </div>`;
+<div class="page">
+  <div class="page-header">Page 1</div>
+  <div class="page-content"><p>Contenu vide</p></div>
+  <div class="page-footer">${pageTitle} - Page 1</div>
+</div>`;
   }
 
   return htmlHeader + pagesHTML + htmlFooter;
+}
+
+/**
+ * --- ROUTE API ---
+ * POST /api/export-html
+ * Body: { markdown?: string, previewHTML?: string, fileName?: string }
+ */
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Méthode non autorisée" });
+  }
+
+  try {
+    const { markdown, previewHTML, fileName = "document" } = req.body;
+
+    if (typeof markdown !== "string" && typeof previewHTML !== "string") {
+      return res.status(400).json({ error: "Aucun contenu valide fourni" });
+    }
+
+    // Génération du HTML principal
+    let htmlContent = previewHTML;
+    if (!htmlContent) {
+      const result = await markdownProcessor.process(markdown);
+      htmlContent = result.toString();
+    }
+
+    const pages = splitIntoPages(htmlContent);
+    const finalHTML = generateMultiPageHTML(pages, fileName);
+
+    // Sécurisation du nom de fichier
+    const safeFileName = encodeURIComponent(fileName);
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${safeFileName}.html"`);
+    res.status(200).send(finalHTML);
+  } catch (err) {
+    console.error("Erreur export HTML:", err);
+    res.status(500).json({
+      error: "Échec de la génération du document HTML",
+      ...(process.env.NODE_ENV === "development" && { details: err.message }),
+    });
+  }
 }

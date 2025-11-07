@@ -22,11 +22,9 @@ body {
 
 @media (max-width: 1280px) {
   .app-container {
-    max-width: 100%;
     padding: 0 12px;
   }
 }
-
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

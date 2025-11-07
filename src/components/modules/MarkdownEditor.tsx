@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
-import { PencilIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, } from '@heroicons/react/24/outline';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import MarkdownToolbar from './MarkdownToolbar';
 
 interface MarkdownEditorProps {
@@ -87,20 +88,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     padding: '0' // Plus de padding pour aligner sur le bord gauche
   };
 
-  const buttonStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px 16px',
-    backgroundColor: isDarkMode ? '#374151' : '#f3f4f6',
-    border: `1px solid ${isDarkMode ? '#4b5563' : '#d1d5db'}`,
-    borderRadius: '8px',
-    color: isDarkMode ? '#f9fafb' : '#374151',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
-  };
+  
 
   const handleTextareaFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
     e.target.style.borderColor = '#3b82f6';
@@ -112,13 +100,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     e.target.style.boxShadow = 'none';
   };
 
-  const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#e5e7eb';
-  };
-
-  const handleButtonLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#f3f4f6';
-  };
+ 
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
@@ -146,18 +128,8 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
 
-    let newValue: string;
-    let newPosition: number;
-
-    if (replaceSelection && start !== end) {
-      // Remplacer la sélection
-      newValue = markdown.substring(0, start) + text + markdown.substring(end);
-      newPosition = start + text.length;
-    } else {
-      // Insérer à la position du curseur
-      newValue = markdown.substring(0, start) + text + markdown.substring(end);
-      newPosition = start + text.length;
-    }
+    const newValue = markdown.substring(0, start) + text + markdown.substring(end);
+    const newPosition = start + text.length;
 
     onChange(newValue);
 
@@ -167,7 +139,6 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       textarea.selectionStart = textarea.selectionEnd = newPosition;
     }, 0);
   };
-
   return (
     <div style={editorContainerStyle}>
       <div style={headerStyle}>
@@ -210,7 +181,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           {showPreview && (
             <div
               style={previewStyle}
-              dangerouslySetInnerHTML={{ __html: marked(markdown) }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked(markdown) as string) }}
             />
           )}
         </div>

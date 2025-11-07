@@ -230,13 +230,16 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
             onMouseLeave={handleFormatLeave}
             style={formatButtonStyle}
             type="button"
+            aria-label="Select export format"
+            aria-expanded={showFormatDropdown}
+            aria-haspopup="true"
           >
             {selectedFormat.toUpperCase()}
             <ChevronDownIcon style={{ width: '14px', height: '14px' }} />
           </button>
 
           {showFormatDropdown && (
-            <div style={dropdownStyle}>
+            <div style={dropdownStyle} role="menu" aria-label="Format options">
               {formats.map((format) => (
                 <button
                   key={format.value}
@@ -244,6 +247,7 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
                   onMouseEnter={handleDropdownItemHover}
                   style={dropdownItemStyle}
                   type="button"
+                  role="menuitem"
                 >
                   {format.label}
                 </button>
@@ -251,7 +255,6 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
             </div>
           )}
         </div>
-
         <button
           onClick={handleButtonClick}
           onMouseEnter={handleButtonHover}

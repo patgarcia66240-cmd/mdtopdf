@@ -1,10 +1,15 @@
 import { mdToPdf } from "md-to-pdf";
 
 export default async function handler(req, res) {
-  try {
-    const { markdown, fileName = "document" } = req.body;
-    if (!markdown) return res.status(400).send("No markdown provided");
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
+  try {
+    const { markdown, fileName: rawFileName = "document" } = req.body;
+    // Sanitize fileName: remove special chars that could enable header injection
+    const fileName = String(rawFileName).replace(/[^\w\s.-]/g, '').trim() || 'document';    if (!markdown) return res.status(400).json({ error: "No markdown provided" });
+    if (markdown.length > 1000000) return res.status(400).json({ error: "Markdown content too large" });
     const pdf = await mdToPdf({ content: markdown }, {
       pdf_options: {
         format: "A4",
@@ -19,6 +24,6 @@ export default async function handler(req, res) {
     res.setHeader("Content-Disposition", `attachment; filename=${fileName}.pdf`);
     res.send(pdf.content);
   } catch (err) {
-    res.status(500).json({ error: "PDF export failed", details: err.message });
-  }
-}
+    console.error('PDF export error:', err);
+    res.status(500).json({ error: "PDF export failed" });
+  }}
