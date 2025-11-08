@@ -72,6 +72,7 @@ interface TemplateManagerProps {
   onTemplateUpdate: (id: string, template: Partial<TemplateWithContent>) => void;
   onTemplateDelete: (id: string) => void;
   isDarkMode: boolean;
+  onClose: () => void;
 }
 
 const TemplateManager: React.FC<TemplateManagerProps> = ({
@@ -80,7 +81,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
   onTemplateCreate,
   onTemplateUpdate,
   onTemplateDelete,
-  isDarkMode
+  isDarkMode,
+  onClose
 }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -621,10 +623,26 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
   return (
     <div style={containerStyle}>
       <div style={headerStyle}>
-        <h2 style={titleStyle}>
-          <DocumentIcon style={{ width: '24px', height: '24px' }} />
-          Gestion des templates
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              color: isDarkMode ? '#9ca3af' : '#6b7280',
+              borderRadius: '4px'
+            }}
+            title="Fermer"
+          >
+            <XMarkIcon style={{ width: '20px', height: '20px' }} />
+          </button>
+          <h2 style={titleStyle}>
+            <DocumentIcon style={{ width: '24px', height: '24px' }} />
+            Gestion des templates
+          </h2>
+        </div>
         <button
           onClick={() => setShowCreateModal(true)}
           style={buttonStyle('primary')}

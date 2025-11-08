@@ -245,8 +245,10 @@ export const useMarkdownToPDF = () => {
 
             // Create a temporary canvas for this split page
             const pageCanvas = document.createElement('canvas');
-            const pageCtx = pageCanvas.getContext('2d')!;
-            pageCanvas.width = canvas.width;
+            const pageCtx = pageCanvas.getContext('2d');
+            if (!pageCtx) {
+              throw new Error('Failed to get 2D context for canvas');
+            }            pageCanvas.width = canvas.width;
 
             // Calculate the height for this split page
             const sourceY = splitPage * pageImgHeight;

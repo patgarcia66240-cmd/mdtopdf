@@ -290,7 +290,8 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
             borderRadius: '12px',
             border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`,
             minWidth: '400px',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+            
           }}>
             <h3 style={{
               margin: '0 0 16px 0',
@@ -364,6 +365,7 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
               justifyContent: 'flex-end'
             }}>
               <button
+                type="button"
                 onClick={() => {
                   setShowLinkModal(false);
                   setLinkUrl('');
@@ -379,9 +381,8 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
                   cursor: 'pointer'
                 }}
               >
-                Annuler
-              </button>
               <button
+                type="button"
                 onClick={insertLink}
                 disabled={!linkUrl || !linkText}
                 style={{
@@ -396,7 +397,7 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
                 }}
               >
                 Insérer
-              </button>
+              </button>              </button>
             </div>
           </div>
         </div>

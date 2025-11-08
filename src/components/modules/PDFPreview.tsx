@@ -208,7 +208,6 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
       </style>
     `;
     html += columnStyles;
-    console.log('Final HTML with column styles:', html);
 
     // Forcer le style gras pour tous les strong/b (au cas où)
     html = html.replace(/<strong([^>]*)>/g, '<strong$1 style="font-weight: 700 !important;">');

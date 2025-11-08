@@ -20,7 +20,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   onApplyTemplate
 }) => {
   const [showManager, setShowManager] = useState(false);
-  const [customTemplates, setCustomTemplates] = useState<TemplateWithContent[]>([]);  const panelStyle = {
+  const [customTemplates, setCustomTemplates] = useState<TemplateWithContent[]>([]);
+  const panelStyle = {
     backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     padding: '24px',
     borderRadius: '12px',
@@ -125,7 +126,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       onApplyTemplate(template.content, template.style);
     }
   };
-
   const handleCardHover = (e: React.MouseEvent<HTMLDivElement>, isSelected: boolean) => {
     if (!isSelected) {
       e.currentTarget.style.transform = 'translateY(-2px)';
@@ -189,6 +189,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         onTemplateUpdate={handleTemplateUpdate}
         onTemplateDelete={handleTemplateDelete}
         isDarkMode={isDarkMode}
+        onClose={() => setShowManager(false)}
       />
     );
   }

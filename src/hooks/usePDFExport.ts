@@ -415,14 +415,12 @@ export const usePDFExport = () => {
     const options = {
       breaks: true,
       gfm: true,
-      sanitize: false,
       pedantic: false,
       smartLists: true,
       smartypants: false,
       mangle: false,
       headerIds: false
     };
-
     // Traiter les sauts de page
     let processedMarkdown = markdown.replace(/<!--\s*pagebreak\s*-->/gi, '\n<!--PAGEBREAK-->\n');
     let html = await marked(processedMarkdown, options);

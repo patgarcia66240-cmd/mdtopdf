@@ -218,12 +218,11 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
               value={pdfOptions.margins.top}
               onChange={(e) => updateOption('margins', {
                 ...pdfOptions.margins,
-                top: parseInt(e.target.value),
-                right: parseInt(e.target.value),
-                bottom: parseInt(e.target.value),
-                left: parseInt(e.target.value)
-              })}
-              min="5"
+                top: parseInt(e.target.value) || pdfOptions.margins.top,
+                right: parseInt(e.target.value) || pdfOptions.margins.right,
+                bottom: parseInt(e.target.value) || pdfOptions.margins.bottom,
+                left: parseInt(e.target.value) || pdfOptions.margins.left
+              })}              min="5"
               max="50"
               placeholder="Marge"
               style={{
@@ -322,10 +321,9 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
                 flex: 1,
                 padding: '8px 12px',
                 border: '1px solid ' + (previewTheme === theme.key
-                  ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
+                  ? '#6b7280'
                   : (isDarkMode ? '#475569' : '#d1d5db')),
-                borderRadius: '8px',
-                background: previewTheme === theme.key
+                borderRadius: '8px',                background: previewTheme === theme.key
                   ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
                   : (isDarkMode ? '#0f172a' : '#ffffff'),
                 color: previewTheme === theme.key
