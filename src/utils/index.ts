@@ -14,6 +14,10 @@ export * from './fileUtils';
 // Export des utilitaires de validation
 export * from './validationUtils';
 
+// Résoudre les ambiguïtés d'export
+export { generateSafeFileName } from './fileUtils';
+export { validatePDFOptions } from './validationUtils';
+
 // Export des utilitaires de performance (à ajouter plus tard)
 // export * from './performanceUtils';
 
@@ -43,10 +47,10 @@ export const validateMarkdownPDF = (markdown: string, pdfOptions?: any) => {
 };
 
 // Utilitaire complet pour le traitement de fichiers
-export const processMarkdownFile = async (file: File) => {
-  const { processFileUpload } = require('./fileUtils');
-  const { parseMarkdownMetadata, validateMarkdown } = require('./markdownUtils');
+import { processFileUpload } from './fileUtils';
+import { parseMarkdownMetadata, validateMarkdown } from './markdownUtils';
 
+export const processMarkdownFile = async (file: File) => {
   const uploadResult = await processFileUpload(file);
   const metadata = parseMarkdownMetadata(uploadResult.content);
   const validation = validateMarkdown(uploadResult.content);
@@ -57,7 +61,6 @@ export const processMarkdownFile = async (file: File) => {
     validation,
   };
 };
-
 // Utilitaire de validation de formulaire réutilisable
 export const createFormValidator = (schema: any, options?: any) => {
   const { validateForm } = require('./validationUtils');

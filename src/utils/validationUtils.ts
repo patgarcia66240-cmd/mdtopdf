@@ -15,22 +15,22 @@ interface ValidationError {
   field: string;
   message: string;
   code: string;
-  value?: any;
+  value?: unknown;
   constraint?: string;
   path?: string[];
 }
 
 interface ValidationRule {
   name: string;
-  validator: (value: any) => boolean | string;
+  validator: (value: unknown) => boolean | string;
   required?: boolean;
   message?: string;
   debounce?: number;
-  options?: Record<string, any>;
+  options?: Record<string, unknown>;
 }
 
 interface ValidationSchema {
-  [field: string]: ValidationRule | ValidationSchema;
+  [field: string]: ValidationRule;
 }
 
 /**
@@ -71,7 +71,7 @@ export function createRule(options: ValidationRule): ValidationRule {
 export const VALIDATION_RULES = {
   required: createRule({
     name: 'required',
-    validator: (value: any) => {
+    validator: (value: unknown) => {
       if (typeof value === 'string') {
         return value.trim().length > 0;
       }
@@ -82,76 +82,81 @@ export const VALIDATION_RULES = {
 
   email: createRule({
     name: 'email',
-    validator: (value: string) => !value || VALIDATION_PATTERNS.email.test(value),
+    validator: (value: unknown) => !value || (typeof value === 'string' && VALIDATION_PATTERNS.email.test(value)),
     message: 'Veuillez entrer une adresse email valide',
   }),
 
   url: createRule({
     name: 'url',
-    validator: (value: string) => !value || VALIDATION_PATTERNS.url.test(value),
+    validator: (value: unknown) => !value || (typeof value === 'string' && VALIDATION_PATTERNS.url.test(value)),
     message: 'Veuillez entrer une URL valide',
   }),
 
   minLength: (min: number) => createRule({
     name: 'minLength',
-    validator: (value: string) => !value || value.length >= min,
+    validator: (value: unknown) => !value || (typeof value === 'string' && value.length >= min),
     message: `Ce champ doit contenir au moins ${min} caractères`,
   }),
 
   maxLength: (max: number) => createRule({
     name: 'maxLength',
-    validator: (value: string) => !value || value.length <= max,
+    validator: (value: unknown) => !value || (typeof value === 'string' && value.length <= max),
     message: `Ce champ ne peut pas dépasser ${max} caractères`,
   }),
 
   min: (min: number) => createRule({
     name: 'min',
-    validator: (value: number) => value === null || value === undefined || value >= min,
+    validator: (value: unknown) => value === null || value === undefined || (typeof value === 'number' && value >= min),
     message: `La valeur doit être supérieure ou égale à ${min}`,
   }),
 
   max: (max: number) => createRule({
     name: 'max',
-    validator: (value: number) => value === null || value === undefined || value <= max,
+    validator: (value: unknown) => value === null || value === undefined || (typeof value === 'number' && value <= max),
     message: `La valeur doit être inférieure ou égale à ${max}`,
   }),
 
   pattern: (regex: RegExp, message?: string) => createRule({
     name: 'pattern',
-    validator: (value: string) => !value || regex.test(value),
+    validator: (value: unknown) => !value || (typeof value === 'string' && regex.test(value)),
     message: message || 'Le format de ce champ est invalide',
   }),
 
   oneOf: (options: string[]) => createRule({
     name: 'oneOf',
-    validator: (value: string) => !value || options.includes(value),
+    validator: (value: unknown) => !value || (typeof value === 'string' && options.includes(value)),
     message: `Ce champ doit être l'une des valeurs suivantes: ${options.join(', ')}`,
   }),
 
   pdfOptions: createRule({
     name: 'pdfOptions',
-    validator: (options: any) => {
-      if (!options) return true;
+    validator: (options: unknown) => {
+      if (!options || typeof options !== 'object') return true;
+
+      const opts = options as Record<string, unknown>;
 
       // Valider le format
-      if (options.format && !['a4', 'letter', 'legal'].includes(options.format)) {
+      if (opts.format && typeof opts.format === 'string' && !['a4', 'letter', 'legal'].includes(opts.format)) {
         return false;
       }
 
       // Valider l'orientation
-      if (options.orientation && !['portrait', 'landscape'].includes(options.orientation)) {
+      if (opts.orientation && typeof opts.orientation === 'string' && !['portrait', 'landscape'].includes(opts.orientation)) {
         return false;
       }
 
       // Valider la taille de la police
-      if (options.fontSize && (options.fontSize < 6 || options.fontSize > 72)) {
+      if (opts.fontSize && typeof opts.fontSize === 'number' && (opts.fontSize < 6 || opts.fontSize > 72)) {
         return false;
       }
 
       // Valider les marges
-      if (options.margins) {
-        const { top, right, bottom, left } = options.margins;
-        if (top < 0 || right < 0 || bottom < 0 || left < 0) {
+      if (opts.margins && typeof opts.margins === 'object') {
+        const margins = opts.margins as Record<string, unknown>;
+        const { top, right, bottom, left } = margins;
+        if (typeof top === 'number' && typeof right === 'number' &&
+            typeof bottom === 'number' && typeof left === 'number' &&
+            (top < 0 || right < 0 || bottom < 0 || left < 0)) {
           return false;
         }
       }
@@ -163,67 +168,76 @@ export const VALIDATION_RULES = {
 
   passwordStrength: (level: 'basic' | 'medium' | 'strong' = 'medium') => createRule({
     name: 'passwordStrength',
-    validator: (value: string) => !value || VALIDATION_PATTERNS.password[level].test(value),
+    validator: (value: unknown) => !value || (typeof value === 'string' && VALIDATION_PATTERNS.password[level].test(value)),
     message: `Le mot de passe ne respecte pas les exigences de sécurité (${level})`,
   }),
 
   hexColor: createRule({
     name: 'hexColor',
-    validator: (value: string) => !value || VALIDATION_PATTERNS.hexColor.test(value),
+    validator: (value: unknown) => !value || (typeof value === 'string' && VALIDATION_PATTERNS.hexColor.test(value)),
     message: 'Veuillez entrer une couleur hexadécimale valide (#RRGGBB ou #RGB)',
   }),
 
   date: createRule({
     name: 'date',
-    validator: (value: string | Date) => {
+    validator: (value: unknown) => {
       if (!value) return true;
-      const date = typeof value === 'string' ? new Date(value) : value;
-      return !isNaN(date.getTime());
+      if (typeof value === 'string' || value instanceof Date) {
+        const date = typeof value === 'string' ? new Date(value) : value;
+        return !isNaN(date.getTime());
+      }
+      return false;
     },
     message: 'Veuillez entrer une date valide',
   }),
 
   futureDate: createRule({
     name: 'futureDate',
-    validator: (value: string | Date) => {
+    validator: (value: unknown) => {
       if (!value) return true;
-      const date = typeof value === 'string' ? new Date(value) : value;
-      return date > new Date();
+      if (typeof value === 'string' || value instanceof Date) {
+        const date = typeof value === 'string' ? new Date(value) : value;
+        return date > new Date();
+      }
+      return false;
     },
     message: 'La date doit être dans le futur',
   }),
 
   pastDate: createRule({
     name: 'pastDate',
-    validator: (value: string | Date) => {
+    validator: (value: unknown) => {
       if (!value) return true;
-      const date = typeof value === 'string' ? new Date(value) : value;
-      return date < new Date();
+      if (typeof value === 'string' || value instanceof Date) {
+        const date = typeof value === 'string' ? new Date(value) : value;
+        return date < new Date();
+      }
+      return false;
     },
     message: 'La date doit être dans le passé',
   }),
 
   number: createRule({
     name: 'number',
-    validator: (value: any) => value === null || value === undefined || !isNaN(Number(value)),
+    validator: (value: unknown) => value === null || value === undefined || !isNaN(Number(value)),
     message: 'Veuillez entrer un nombre valide',
   }),
 
   integer: createRule({
     name: 'integer',
-    validator: (value: any) => value === null || value === undefined || (Number.isInteger(Number(value)) && !isNaN(Number(value))),
+    validator: (value: unknown) => value === null || value === undefined || (Number.isInteger(Number(value)) && !isNaN(Number(value))),
     message: 'Veuillez entrer un nombre entier',
   }),
 
   positive: createRule({
     name: 'positive',
-    validator: (value: number) => value === null || value === undefined || value > 0,
+    validator: (value: unknown) => value === null || value === undefined || (typeof value === 'number' && value > 0),
     message: 'La valeur doit être positive',
   }),
 
   nonNegative: createRule({
     name: 'nonNegative',
-    validator: (value: number) => value === null || value === undefined || value >= 0,
+    validator: (value: unknown) => value === null || value === undefined || (typeof value === 'number' && value >= 0),
     message: 'La valeur ne peut pas être négative',
   }),
 };
@@ -232,7 +246,7 @@ export const VALIDATION_RULES = {
  * Valide un objet en utilisant un schéma
  */
 export function validateSchema(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   schema: ValidationSchema
 ): ValidationResult {
   const errors: ValidationError[] = [];
@@ -283,7 +297,7 @@ export function validateSchema(
  * Valide un seul champ
  */
 export function validateField(
-  value: any,
+  value: unknown,
   rules: ValidationRule | ValidationRule[]
 ): ValidationResult {
   const ruleArray = Array.isArray(rules) ? rules : [rules];
@@ -348,9 +362,10 @@ export function validatePDFOptions(options: Partial<AppPDFOptions>): ValidationR
     margins: {
       name: 'margins',
       required: false,
-      validator: (margins: any) => {
-        if (!margins) return true;
-        const { top, right, bottom, left } = margins;
+      validator: (margins: unknown) => {
+        if (!margins || typeof margins !== 'object') return true;
+        const m = margins as Record<string, unknown>;
+        const { top, right, bottom, left } = m;
         return typeof top === 'number' && typeof right === 'number' &&
                typeof bottom === 'number' && typeof left === 'number' &&
                top >= 0 && right >= 0 && bottom >= 0 && left >= 0;
@@ -366,7 +381,7 @@ export function validatePDFOptions(options: Partial<AppPDFOptions>): ValidationR
  * Valide un formulaire complet
  */
 export function validateForm(
-  formData: Record<string, any>,
+  formData: Record<string, unknown>,
   validationSchema: ValidationSchema,
   options: {
     stopOnFirstError?: boolean;
@@ -507,13 +522,13 @@ export function validateAndSanitizeEmail(email: string): {
  * Crée un validateur réutilisable avec debounce
  */
 export function createDebouncedValidator(
-  validator: (value: any) => ValidationResult,
+  validator: (value: unknown) => ValidationResult,
   delay: number = 300
 ) {
-  let timeoutId: NodeJS.Timeout | null = null;
-  let lastValue: any = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let lastValue: unknown = null;
 
-  return (value: any, callback?: (result: ValidationResult) => void): void => {
+  return (value: unknown, callback?: (result: ValidationResult) => void): void => {
     lastValue = value;
 
     if (timeoutId) {
@@ -528,7 +543,6 @@ export function createDebouncedValidator(
     }, delay);
   };
 }
-
 /**
  * Validation de la force d'un mot de passe
  */

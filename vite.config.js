@@ -14,9 +14,8 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Core React chunks
-          'react-vendor': ['react', 'react-dom'],
-          'react-dom': ['react-dom/client'],
-
+          'react-vendor': ['react'],
+          'react-dom': ['react-dom', 'react-dom/client'],
           // PDF processing chunks
           'pdf-core': ['jspdf'],
           'pdf-rendering': ['html2canvas', 'dompurify'],
@@ -44,18 +43,9 @@ export default defineConfig({
           'a11y-core': ['axe-core'],
         },
         chunkFileNames: (chunkInfo) => {
-          // Nom de chunk optimisé pour le cache
-          if (chunkInfo.name === 'react-vendor') return 'assets/react.[hash].js';
-          if (chunkInfo.name.includes('pdf')) return 'assets/pdf.[hash].js';
-          if (chunkInfo.name.includes('markdown')) return 'assets/markdown.[hash].js';
-          if (chunkInfo.name.includes('state')) return 'assets/state.[hash].js';
-          if (chunkInfo.name.includes('ui')) return 'assets/ui.[hash].js';
-          if (chunkInfo.name.includes('perf')) return 'assets/perf.[hash].js';
-          if (chunkInfo.name.includes('file')) return 'assets/file.[hash].js';
-          if (chunkInfo.name.includes('a11y')) return 'assets/a11y.[hash].js';
+          // Preserve unique chunk names for better debugging
           return 'assets/[name].[hash].js';
-        },
-        assetFileNames: (assetInfo) => {
+        },        assetFileNames: (assetInfo) => {
           // Optimisation du nom des assets
           if (assetInfo.name.endsWith('.css')) {
             return 'assets/styles/[name].[hash][extname]';
@@ -89,12 +79,9 @@ export default defineConfig({
     target: 'esnext',
     cssCodeSplit: true,
     // Préchargement des chunks critiques
-    modulePreload: {
-      polyfill: true,
-    },
-  },
-  resolve: {
-    alias: {
+      mangle: {
+        // Only mangle top-level identifiers (default behavior)
+      },    alias: {
       '@': '/src',
       '@/components': '/src/components',
       '@/hooks': '/src/hooks',
@@ -102,8 +89,8 @@ export default defineConfig({
       '@/services': '/src/services',
       '@/types': '/src/types',
       '@/utils': '/src/utils',
-      'events': 'events/',
-      'util': 'util/'
+      'events': 'events',
+      'util': 'util'
     }
   },
   optimizeDeps: {

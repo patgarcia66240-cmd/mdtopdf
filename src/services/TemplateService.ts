@@ -1198,9 +1198,8 @@ class TemplateService {
    * Générer un ID de template unique
    */
   private generateTemplateId(): string {
-    return `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `template_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
-
   /**
    * Nettoyer le stockage local (pour le développement)
    */

@@ -1,9 +1,13 @@
 export interface TemplateStyle {
   fontFamily?: string;
   fontSize?: number;
+  fontWeight?: string;
+  fontStyle?: string;
   lineHeight?: number;
   color?: string;
   backgroundColor?: string;
+  textDecoration?: string;
+  textAlign?: string;
   margins?: {
     top: number;
     right: number;
@@ -21,6 +25,7 @@ export interface TemplateStyle {
     color: string;
     style: 'solid' | 'dashed' | 'dotted' | 'none';
   };
+  borderRadius?: number;
 }
 
 export interface TemplateHeader {

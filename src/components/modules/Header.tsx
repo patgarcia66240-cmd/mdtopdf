@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   SunIcon,
   MoonIcon,
@@ -22,7 +22,6 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({
-  title,
   showImport,
   showTemplates,
   showExport,
@@ -32,8 +31,6 @@ const Header: React.FC<HeaderProps> = ({
   onThemeToggle,
   onAdvancedExport
 }) => {
-  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
-
   // Déterminer les classes Tailwind pour les boutons d'onglets
   const getTabButtonClasses = (isActive: boolean) => {
     const baseClasses = "px-5 py-2 border border-b-2 rounded-t-lg text-sm font-medium cursor-pointer transition-all duration-200 min-w-[120px] flex items-center justify-start gap-0 outline-none appearance-none transform translate-y-0 hover:translate-y-[-1px] hover:shadow-lg";
@@ -78,8 +75,6 @@ const Header: React.FC<HeaderProps> = ({
           <button
             className={getTabButtonClasses(!showTemplates && !showExport && !showImport)}
             onClick={() => onTabChange('editor')}
-            onMouseEnter={() => setHoveredTab('editor')}
-            onMouseLeave={() => setHoveredTab(null)}
           >
             <PencilIcon className="w-4 h-4 mr-1.5 flex-shrink-0" aria-hidden="true" />
             <span>Éditeur</span>
@@ -87,8 +82,6 @@ const Header: React.FC<HeaderProps> = ({
           <button
             className={getTabButtonClasses(showImport)}
             onClick={() => onTabChange('import')}
-            onMouseEnter={() => setHoveredTab('import')}
-            onMouseLeave={() => setHoveredTab(null)}
           >
             <ArrowDownTrayIcon className="w-4 h-4 mr-1.5 flex-shrink-0" aria-hidden="true" />
             <span>Importer</span>
@@ -96,8 +89,6 @@ const Header: React.FC<HeaderProps> = ({
           <button
             className={getTabButtonClasses(showTemplates)}
             onClick={() => onTabChange('templates')}
-            onMouseEnter={() => setHoveredTab('templates')}
-            onMouseLeave={() => setHoveredTab(null)}
           >
             <BookOpenIcon className="w-4 h-4 mr-1.5 flex-shrink-0" aria-hidden="true" />
             <span>Templates</span>

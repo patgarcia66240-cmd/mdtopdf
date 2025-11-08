@@ -502,38 +502,42 @@ export function cleanMarkdown(content: string, options: {
 export function extractMarkdownElements(content: string, elementType: 'heading' | 'link' | 'image' | 'code'): string[] {
   const elements: string[] = [];
 
-  switch (elementType) {
-    case 'heading':
+switch (elementType) {
+    case 'heading': {
       const headingRegex = /^(#{1,6})\s+(.+)$/gm;
       let headingMatch;
       while ((headingMatch = headingRegex.exec(content)) !== null) {
         elements.push(headingMatch[0]);
       }
       break;
+    }
 
-    case 'link':
+    case 'link': {
       const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
       let linkMatch;
       while ((linkMatch = linkRegex.exec(content)) !== null) {
         elements.push(linkMatch[0]);
       }
       break;
+    }
 
-    case 'image':
+    case 'image': {
       const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
       let imageMatch;
       while ((imageMatch = imageRegex.exec(content)) !== null) {
         elements.push(imageMatch[0]);
       }
       break;
+    }
 
-    case 'code':
-      const codeRegex = /```[\s\S]*?```|`[^`]+`/g;
+    case 'code': {
+      const codeRegex = /`([^`]+)`|```(\w*)\n([\s\S]*?)```/g;
       let codeMatch;
       while ((codeMatch = codeRegex.exec(content)) !== null) {
         elements.push(codeMatch[0]);
       }
       break;
+    }
   }
 
   return elements;

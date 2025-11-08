@@ -199,7 +199,7 @@ class AdvancedExportService {
           y = margins.top;
         }
         pdf.text(line, margins.left, y);
-        y += fontSize * 0.5;
+        y += fontSize * 1.2;
       });
     }
 
@@ -262,7 +262,7 @@ class AdvancedExportService {
 
     // Exporter en HTML avec extension .docx (solution temporaire)
     const blob = new Blob([styledHtml], { type: 'text/html;charset=utf-8' });
-    saveAs(blob, `${options.filename}.docx`);
+    saveAs(blob, `${options.filename}.html`); // Word-compatible HTML
   }
 
   /**

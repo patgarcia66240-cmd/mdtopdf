@@ -128,8 +128,8 @@ Gestionnaire de templates avec :
 #### Gestion de la Mémoire
 - **Pic initial** : ~45MB
 - **Stabilisation** : ~25MB après 30 secondes
-- **Détection de fuites** : Aucune fuite détectée- **Nettoyage** : Auto-garbage collection efficace
-
+- **Détection de fuites** : Aucune fuite détectée
+- **Nettoyage** : Auto-garbage collection efficace
 ### 🎯 Optimisations Implémentées
 
 #### Code Splitting
@@ -382,7 +382,8 @@ body {
 #### Cas #2: Université
 **Contexte :** Département informatique de 2000 étudiants
 **Besoin** : Faciliter la soumission de devoirs
-**Solution :** Template "Académique" + import de fichiers .md**Résultats :**
+**Solution :** Template "Académique" + import de fichiers .md
+**Résultats :**
 - 95% des étudiants adoptent l'outil
 - Réduction de 40% des questions de formatage
 - Satisfaction enseignants : 4.7/5

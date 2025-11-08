@@ -207,11 +207,11 @@ export function validatePDFOptions(options: Partial<AppPDFOptions>): {
   errors: string[];
 } {
   const errors: string[] = [];
-
-  // Valider le format
-  if (options.format && !['a4', 'letter', 'legal'].includes(options.format)) {
-    errors.push(`Format non valide: ${options.format}. Formats supportés: a4, letter, legal`);
+  if (options.format && !Object.keys(PAGE_FORMATS_MM).includes(options.format)) {
+    errors.push(`Format non valide: ${options.format}. Formats supportés: ${Object.keys(PAGE_FORMATS_MM).join(', ')}`);
   }
+  // Valider le format
+
 
   // Valider l'orientation
   if (options.orientation && !['portrait', 'landscape'].includes(options.orientation)) {

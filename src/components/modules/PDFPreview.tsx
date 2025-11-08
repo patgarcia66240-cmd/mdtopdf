@@ -2,6 +2,7 @@ import { useState, useEffect, forwardRef } from 'react';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { marked } from 'marked';
 import PaginationControls from './PaginationControls';
+import ZoomControls from './ZoomControls';
 import PDFPreviewSkeleton from './PDFPreviewSkeleton';
 
 
@@ -32,7 +33,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   setTotalPages: externalSetTotalPages,
   viewMode: externalViewMode,
   onViewModeChange: externalOnViewModeChange,
-  /*onZoomChange: externalOnZoomChange*/
+  onZoomChange: externalOnZoomChange
 }, ref) => {
   // Utiliser les états externes ou les états locaux
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
@@ -46,8 +47,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   const setTotalPages = externalSetTotalPages ?? setInternalTotalPages;
   const viewMode = externalViewMode ?? internalViewMode;
   const onViewModeChange = externalOnViewModeChange ?? setInternalViewMode;
-  /* const onZoomChange = externalOnZoomChange ?? (() => { });
-*/
+  const onZoomChange = externalOnZoomChange ?? (() => {});
   const getPreviewClasses = () => {
     return isDarkMode
       ? 'bg-slate-800 p-6 rounded-xl border border-slate-700'
@@ -68,8 +68,8 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
 
   const getContentWrapperClasses = () => {
     return isDarkMode
-      ? 'bg-slate-900 rounded-lg p-5 overflow-auto origin-top-left transition-transform duration-200 flex justify-center'
-      : 'bg-gray-50 rounded-lg p-5 overflow-auto origin-top-left transition-transform duration-200 flex justify-center';
+      ? 'bg-slate-900 rounded-lg p-5 overflow-auto origin-top-left transition-transform duration-700 ease-in-out flex justify-center'
+      : 'bg-gray-50 rounded-lg p-5 overflow-auto origin-top-left transition-transform duration-700 ease-in-out flex justify-center';
   };
 
   const getThemeClasses = () => {
@@ -425,13 +425,16 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
           <span>{totalPages} page{totalPages > 1 ? 's' : ''}</span>
           <span>•</span>
           <span>Thème: {previewTheme}</span>
-          <span>•</span>
-          <span>{previewZoom}%</span>
         </div>
       </div>
 
-      {/* Pagination en haut */}
-      <div className="bg-transparent py-2 mb-3 flex justify-center items-center">
+      {/* Pagination et contrôles de zoom en haut */}
+      <div className="bg-transparent py-2 mb-3 flex justify-between items-center">
+        <ZoomControls
+          previewZoom={previewZoom}
+          onZoomChange={onZoomChange}
+          isDarkMode={isDarkMode}
+        />
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
