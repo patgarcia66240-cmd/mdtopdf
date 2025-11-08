@@ -4,6 +4,7 @@ import { marked } from 'marked';
 import PaginationControls from './PaginationControls';
 import ZoomControls from './ZoomControls';
 import PDFPreviewSkeleton from './PDFPreviewSkeleton';
+import ScrollCircularSlider from '../ui/ScrollCircularSlider';
 
 
 interface PDFPreviewProps {
@@ -40,6 +41,8 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   const [internalViewMode, setInternalViewMode] = useState<'single' | 'all'>('all');
   const [internalTotalPages, setInternalTotalPages] = useState(1);
   const [processedHTML, setProcessedHTML] = useState('');
+  const [scrollPageIndicator, setScrollPageIndicator] = useState(1);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   const currentPage = externalCurrentPage ?? internalCurrentPage;
   const setCurrentPage = externalSetCurrentPage ?? setInternalCurrentPage;
@@ -367,20 +370,77 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
     );
   };
 
+  // Fonction pour gérer le scroll et détecter la page visible
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const scrollTop = container.scrollTop;
+    const scrollHeight = container.scrollHeight - container.clientHeight;
+
+    // Calculer la progression du scroll (0 à 1)
+    const progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+    setScrollProgress(progress);
+
+    // Calculer quelle page est principalement visible
+    const currentPageIndex = Math.round(progress * (totalPages - 1));
+    const visiblePage = Math.min(Math.max(1, currentPageIndex + 1), totalPages);
+
+    setScrollPageIndicator(visiblePage);
+  };
+
+  // Fonction pour naviguer vers une position spécifique via le slider
+  const scrollToPosition = (progress: number) => {
+    const container = document.getElementById('scroll-container');
+    if (!container) return;
+
+    const scrollHeight = container.scrollHeight - container.clientHeight;
+    const targetScrollTop = progress * scrollHeight;
+
+    // Utiliser requestAnimationFrame pour un scroll ultra fluide
+    requestAnimationFrame(() => {
+      container.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
+      });
+    });
+  };
+
+  // Fonction pour gérer le changement de progression depuis le slider
+  const handleProgressChange = (progress: number, currentPage: number) => {
+    setScrollProgress(progress);
+    setScrollPageIndicator(currentPage);
+  };
+
   const renderAllPages = () => {
     return (
       <div className="relative">
         {/* Conteneur scrollable avec hauteur d'une seule page A4 */}
         <div
+          id="scroll-container"
           className="overflow-y-auto overflow-x-hidden"
           style={{
             height: '297mm', // Hauteur exacte d'une page A4
-            width: '210mm'   // Largeur exacte d'une page A4
+            width: '210mm',   // Largeur exacte d'une page A4
+            scrollSnapType: 'y mandatory', // Snap automatique sur les pages
+            scrollBehavior: 'smooth',
+            scrollbarWidth: 'thin', // Scrollbar plus fine
+            scrollbarColor: isDarkMode ? '#475569 #1e293b' : '#d1d5db #f9fafb', // Couleurs personnalisées
+            scrollPaddingTop: '8px', // Marge intérieure pour le snap
+            scrollPaddingBottom: '8px',
+            transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
           }}
+          onScroll={handleScroll}
         >
           <div className="space-y-0">
             {pageContents.map((pageContent, i) => (
-              <div key={i} className="relative">
+              <div
+                key={i}
+                className="relative transition-all duration-300 ease-out"
+                style={{
+                  scrollSnapAlign: 'start', // Snap au début de chaque page
+                  scrollSnapStop: 'always',  // Toujours s'arrêter sur une page
+                  scrollMargin: '4px'        // Marge pour le snap
+                }}
+              >
                 {/* Page A4 */}
                 <div className="bg-white p-[10mm] pb-[5mm] shadow-lg w-[210mm] h-[297mm] box-border overflow-hidden relative">
                   {/* Header avec numéro de page */}
@@ -414,17 +474,25 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
           </div>
         </div>
 
-        {/* Indicateur de scroll */}
+        {/* Slider circulaire de contrôle de scroll */}
+        <ScrollCircularSlider
+          totalPages={totalPages}
+          currentPage={scrollPageIndicator}
+          progress={scrollProgress}
+          isDarkMode={isDarkMode}
+          onScrollToPosition={scrollToPosition}
+          onProgressChange={handleProgressChange}
+        />
+
+        {/* Instructions de scroll */}
         {totalPages > 1 && (
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex flex-col gap-1">
-            {pageContents.map((_, i) => (
-              <div
-                key={i}
-                className={`w-1 h-2 rounded-full transition-colors ${
-                  i === 0 ? 'bg-blue-500' : 'bg-gray-300'
-                }`}
-              />
-            ))}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+            <div className="flex items-center gap-2 text-xs text-gray-400 bg-white/80 backdrop-blur px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+              <span>Scroll pour voir les autres pages</span>
+            </div>
           </div>
         )}
       </div>

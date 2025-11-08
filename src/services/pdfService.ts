@@ -59,7 +59,7 @@ export class PDFService {
       const parts = html.split(pageBreakPattern);
       const pages: string[] = [];
 
-      parts.forEach((part, index) => {
+      parts.forEach((part, _) => {
         const cleanPart = part.trim();
         if (cleanPart) {
           pages.push(cleanPart);
