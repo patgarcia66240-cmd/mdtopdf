@@ -265,6 +265,7 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
           onMouseEnter={() => setHoveredButton('preview')}
           onMouseLeave={() => setHoveredButton(null)}
           title={showPreview ? "Masquer l'aperçu" : "Afficher l'aperçu"}
+           aria-label="toggle preview"
         >
           <EyeIcon style={{ width: '16px', height: '16px' }} />
         </button>
@@ -381,7 +382,9 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
                   cursor: 'pointer'
                 }}
               >
-              <button
+              Annuler
+            </button>
+            <button
                 type="button"
                 onClick={insertLink}
                 disabled={!linkUrl || !linkText}
@@ -397,7 +400,7 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
                 }}
               >
                 Insérer
-              </button>              </button>
+              </button>
             </div>
           </div>
         </div>

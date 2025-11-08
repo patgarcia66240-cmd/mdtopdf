@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import MarkdownEditor from './modules/MarkdownEditor';
 import PDFControlPanel from './modules/PDFControlPanel';
 import PDFPreview from './modules/PDFPreview';
-import PaginationControls from './modules/PaginationControls';
 import TemplateSelectorEnhanced from './templates/TemplateSelectorEnhanced';
 import ExportPanel from './modules/ExportPanel';
 import AdvancedExportPanel from './export/AdvancedExportPanel';
@@ -17,7 +16,7 @@ import { PDFOptions } from '../types/app';
 
 const ProMarkdownToPDFRefactored: React.FC = () => {
   const markdownRef = useRef<HTMLDivElement>(null);
-  const { templates, selectedTemplate, setSelectedTemplate } = useTemplates();
+  const { selectTemplate } = useTemplates();
   const { exportToPDF, exportToHTML, exportToMarkdown, exportToDOCX, isExporting } = usePDFExport();
 
   // États
@@ -464,14 +463,13 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
         case 'md':
           exportToMarkdown(markdown, fileName);
           break;
-        default:
-          await exportToPDF(markdownRef, fileName, pdfOptions);
       }
     } catch (error) {
       console.error('Export failed:', error);
+      // TODO: Show user-facing error notification
+      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
-
   const handleExportFormatChange = (format: string) => {
     setExportFormat(format);
   };
@@ -486,10 +484,6 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
 
   const handleExportDOCX = () => {
     exportToDOCX(markdown, fileName);
-  };
-
-  const handleCreateTemplate = () => {
-    console.log('Création d\'un nouveau template - fonctionnalité à implémenter');
   };
 
   const handleFileImport = (content: string, fileName: string) => {
@@ -509,10 +503,6 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
   const handleViewModeChange = (mode: 'single' | 'all') => {
     setViewMode(mode);
     if (mode === 'single') {
@@ -523,9 +513,12 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
   const handleTabChange = (tab: 'editor' | 'import' | 'templates' | 'export') => {
     // Sauvegarder l'onglet sélectionné dans le localStorage
     if (typeof window !== 'undefined') {
-      localStorage.setItem('mdtopdf-active-tab', tab === 'editor' ? 'options' : tab);
+      try {
+        localStorage.setItem('mdtopdf-active-tab', tab === 'editor' ? 'options' : tab);
+      } catch (error) {
+        console.warn('Failed to write to localStorage:', error);
+      }
     }
-
     switch (tab) {
       case 'editor':
         setShowTemplates(false);
@@ -588,7 +581,7 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
           <TemplateSelectorEnhanced
             isDarkMode={isDarkMode}
             onTemplateSelect={(template) => {
-              setSelectedTemplate(template);
+              selectTemplate(template);
               handleApplyTemplate('', template);
             }}
           />
@@ -681,7 +674,7 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
       {showAdvancedExport && (
         <AdvancedExportPanel
           markdown={markdown}
-          elementRef={markdownRef}
+          elementRef={markdownRef as React.RefObject<HTMLElement>}
           isDarkMode={isDarkMode}
           onClose={() => setShowAdvancedExport(false)}
         />

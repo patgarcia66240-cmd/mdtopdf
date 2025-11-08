@@ -3,6 +3,13 @@
  * Ce fichier permet d'importer tous les types depuis un seul endroit
  */
 
+import type { PDFOptions, AppState, RecentFile } from './app';
+import type { PDFGenerationOptions, PDFGenerationResult, PDFError } from './pdf';
+import type { MarkdownProcessingOptions, MarkdownParseResult, MarkdownRenderResult, MarkdownElement } from './markdown';
+import type { APIError, ValidationError, MarkdownRenderResponse, UserProfile, UserPreferences } from './api';
+import type { FileUploadResult, PerformanceMetrics, AppError, CacheOptions, LoggerConfig } from './utils';
+import type { Template } from './template';
+
 // Types applicatifs principaux
 export * from './app';
 

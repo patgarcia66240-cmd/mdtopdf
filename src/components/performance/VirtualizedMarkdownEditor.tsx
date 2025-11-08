@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import React, { useState,  useRef, useMemo, useCallback } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
@@ -7,8 +6,6 @@ interface VirtualizedMarkdownEditorProps {
   markdown: string;
   onChange: (value: string) => void;
   isDarkMode: boolean;
-  chunkSize?: number;
-  maxVisibleLines?: number;
 }
 
 interface LineItem {
@@ -20,13 +17,10 @@ interface LineItem {
 const VirtualizedMarkdownEditor: React.FC<VirtualizedMarkdownEditorProps> = ({
   markdown,
   onChange,
-  isDarkMode,
-  chunkSize = 1000,
-  maxVisibleLines = 50
+  isDarkMode
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [cursorPosition, setCursorPosition] = useState(0);
-  const [scrollTop, setScrollTop] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
 
   // Diviser le markdown en lignes
@@ -52,19 +46,13 @@ const VirtualizedMarkdownEditor: React.FC<VirtualizedMarkdownEditorProps> = ({
     onChange(newValue);
   }, [onChange]);
 
-  // Gestionnaire de scroll synchronisé
-  const handleTextareaScroll = useCallback((e: React.UIEvent<HTMLTextAreaElement>) => {
-    const textarea = e.currentTarget;
-    setScrollTop(textarea.scrollTop);
-  }, []);
-
   // Calculer la ligne visible actuelle
   const currentLine = useMemo(() => {
     const textBeforeCursor = markdown.substring(0, cursorPosition);
     return textBeforeCursor.split('\n').length - 1;
   }, [markdown, cursorPosition]);
 
-  // Rendu d'une ligne virtualisée
+  // Rendu d'une ligne virtualisée (pour utilisation future avec react-window)
   const renderLine = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const line = lineChunks[index];
     if (!line) return null;
@@ -200,7 +188,6 @@ const VirtualizedMarkdownEditor: React.FC<VirtualizedMarkdownEditorProps> = ({
           ref={textareaRef}
           value={markdown}
           onChange={handleTextareaChange}
-          onScroll={handleTextareaScroll}
           onFocus={() => setIsEditing(true)}
           onBlur={() => setIsEditing(false)}
           placeholder="# Entrez votre contenu Markdown ici..."

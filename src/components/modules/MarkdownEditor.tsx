@@ -34,8 +34,8 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
     overflow: 'hidden',
     position: 'relative',
-    boxSizing: 'border-box',
-    minHeight: '400px' // Hauteur minimale pour lisibilité
+    boxSizing: 'border-box'
+    // minHeight retiré pour préserver le ratio A4 sur tous les écrans
   };
 
   const editorStyle = {

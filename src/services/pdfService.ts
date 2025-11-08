@@ -183,6 +183,8 @@ export class PDFService {
           orientation: 'portrait',
         },
         preview: '/templates/modern-preview.png',
+        colors: ['#2563eb', '#64748b', '#1e293b', '#ffffff'],
+        isPro: false,
       },
       {
         id: 'academic',
@@ -206,6 +208,8 @@ export class PDFService {
           orientation: 'portrait',
         },
         preview: '/templates/academic-preview.png',
+        colors: ['#000000', '#666666', '#ffffff'],
+        isPro: false,
       },
     ];
 
