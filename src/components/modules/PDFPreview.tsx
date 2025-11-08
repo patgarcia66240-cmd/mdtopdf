@@ -2,6 +2,7 @@ import { useState, useEffect, forwardRef } from 'react';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { marked } from 'marked';
 import PaginationControls from './PaginationControls';
+import PDFPreviewSkeleton from './PDFPreviewSkeleton';
 
 
 interface PDFPreviewProps {
@@ -9,6 +10,7 @@ interface PDFPreviewProps {
   previewTheme: string;
   previewZoom: number;
   isDarkMode: boolean;
+  isLoading?: boolean;
   currentPage?: number;
   setCurrentPage?: (page: number) => void;
   totalPages?: number;
@@ -23,6 +25,7 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   previewTheme,
   previewZoom,
   isDarkMode,
+  isLoading = false,
   currentPage: externalCurrentPage,
   setCurrentPage: externalSetCurrentPage,
   totalPages: externalTotalPages,
@@ -401,6 +404,11 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
     }
     return pages;
   };
+
+  // Afficher le skeleton pendant le chargement
+  if (isLoading) {
+    return <PDFPreviewSkeleton isDarkMode={isDarkMode} viewMode={viewMode} />;
+  }
 
   return (
     <div className={`${getPreviewClasses()} preview-container`}>

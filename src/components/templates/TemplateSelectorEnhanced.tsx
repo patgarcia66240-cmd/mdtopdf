@@ -1,6 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { DocumentTextIcon, EyeIcon, DocumentDuplicateIcon, TrashIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, MagnifyingGlassIcon, XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { useTemplates } from '../../hooks/useTemplates';
+import {
+  DocumentTextIcon,
+  EyeIcon,
+  DocumentDuplicateIcon,
+  TrashIcon,
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon,
+  PlusIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DocumentIcon,
+  SparklesIcon,
+  AcademicCapIcon,
+  BriefcaseIcon,
+  CodeBracketIcon,
+  ClipboardDocumentListIcon,
+  NewspaperIcon,
+  BookOpenIcon
+} from '@heroicons/react/24/outline';
+import { useTemplates } from '../../hooks/useTemplates.tsx';
 import { Template, TemplateCategory } from '../../types/template';
 
 interface TemplateSelectorEnhancedProps {
@@ -36,7 +56,9 @@ const TemplateSelectorEnhanced: React.FC<TemplateSelectorEnhancedProps> = ({
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importJson, setImportJson] = useState('');
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   // Filtrer les templates
   const filteredTemplates = React.useMemo(() => {
@@ -123,6 +145,95 @@ const TemplateSelectorEnhanced: React.FC<TemplateSelectorEnhancedProps> = ({
     }
   };
 
+  // Navigation du carousel
+  const canGoNext = carouselIndex < Math.max(0, filteredTemplates.length - 3);
+  const canGoPrev = carouselIndex > 0;
+
+  const handleNext = () => {
+    if (canGoNext) {
+      setCarouselIndex(carouselIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (canGoPrev) {
+      setCarouselIndex(carouselIndex - 1);
+    }
+  };
+
+  // Calculer le nombre de cartes visibles
+  const visibleCards = Math.min(3, filteredTemplates.length);
+
+  // Réinitialiser l'index du carousel quand les filtres changent
+  React.useEffect(() => {
+    setCarouselIndex(0);
+  }, [selectedCategory, searchQuery]);
+
+  // Fonction pour obtenir l'icône correspondante à la catégorie
+  const getCategoryIcon = (category: string) => {
+    switch (category.toLowerCase()) {
+      case 'business':
+        return <BriefcaseIcon style={{ width: '14px', height: '14px' }} />;
+      case 'academic':
+        return <AcademicCapIcon style={{ width: '14px', height: '14px' }} />;
+      case 'technical':
+        return <CodeBracketIcon style={{ width: '14px', height: '14px' }} />;
+      case 'report':
+        return <ClipboardDocumentListIcon style={{ width: '14px', height: '14px' }} />;
+      case 'modern':
+        return <SparklesIcon style={{ width: '14px', height: '14px' }} />;
+      default:
+        return <DocumentIcon style={{ width: '14px', height: '14px' }} />;
+    }
+  };
+
+  // Classes pour les onglets de catégories (style Header)
+  const getCategoryTabClasses = (isActive: boolean) => {
+    const baseClasses = "px-4 py-1.5 border border-b-2 rounded-t-lg text-xs font-medium cursor-pointer transition-all duration-200 min-w-[80px] flex items-center justify-center gap-1 outline-none appearance-none transform translate-y-0 hover:translate-y-[-1px] hover:shadow-md";
+
+    if (isActive) {
+      return `${baseClasses} bg-gradient-to-r from-gray-500 to-gray-600 text-white border-gray-600 border-b-gray-600`;
+    }
+
+    return `${baseClasses} ${isDarkMode
+      ? 'bg-gray-700 text-gray-100 border-gray-600 border-b-transparent hover:bg-gray-600 hover:border-b-gray-500'
+      : 'bg-gray-50 text-gray-700 border-gray-300 border-b-transparent hover:bg-gray-200 hover:border-b-gray-400'
+    }`;
+  };
+
+  // Fonction pour obtenir l'icône correspondante au template
+  const getTemplateIcon = (template: Template) => {
+    // Basé sur la catégorie ou le preview emoji
+    const category = template.metadata.category?.toLowerCase();
+    const preview = template.metadata.preview || '';
+
+    // Mapping des catégories vers les icônes
+    if (category?.includes('business') || preview?.includes('💼')) {
+      return <BriefcaseIcon style={{ width: '16px', height: '16px' }} />;
+    }
+    if (category?.includes('academic') || preview?.includes('🎓')) {
+      return <AcademicCapIcon style={{ width: '16px', height: '16px' }} />;
+    }
+    if (category?.includes('code') || category?.includes('technical') || preview?.includes('💻')) {
+      return <CodeBracketIcon style={{ width: '16px', height: '16px' }} />;
+    }
+    if (category?.includes('report') || preview?.includes('📊')) {
+      return <ClipboardDocumentListIcon style={{ width: '16px', height: '16px' }} />;
+    }
+    if (category?.includes('news') || preview?.includes('📰')) {
+      return <NewspaperIcon style={{ width: '16px', height: '16px' }} />;
+    }
+    if (category?.includes('modern') || preview?.includes('✨')) {
+      return <SparklesIcon style={{ width: '16px', height: '16px' }} />;
+    }
+    if (category?.includes('book') || preview?.includes('📚')) {
+      return <BookOpenIcon style={{ width: '16px', height: '16px' }} />;
+    }
+
+    // Icône par défaut
+    return <DocumentIcon style={{ width: '16px', height: '16px' }} />;
+  };
+
   // Styles
   const containerStyle = {
     backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
@@ -150,7 +261,7 @@ const TemplateSelectorEnhanced: React.FC<TemplateSelectorEnhancedProps> = ({
 
   const searchContainerStyle = {
     position: 'relative' as const,
-    marginBottom: '16px'
+    marginBottom: '12px'
   };
 
   const searchInputStyle = {
@@ -175,9 +286,12 @@ const TemplateSelectorEnhanced: React.FC<TemplateSelectorEnhancedProps> = ({
 
   const categoryTabsStyle = {
     display: 'flex',
-    gap: '8px',
-    marginBottom: '20px',
-    flexWrap: 'wrap' as const
+    gap: '2px',
+    marginBottom: '0px',
+    alignItems: 'flex-end',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+    padding: '0 8px 0 8px',
+    borderBottom: `2px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`
   };
 
   const categoryTabStyle = (isActive: boolean) => ({
@@ -199,12 +313,62 @@ const TemplateSelectorEnhanced: React.FC<TemplateSelectorEnhancedProps> = ({
     gap: '6px'
   });
 
-  const templatesGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: '16px',
-    minHeight: '400px'
+  const carouselContainerStyle = {
+    position: 'relative' as const,
+    overflow: 'hidden',
+    borderRadius: '0 0 12px 12px',
+    backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc',
+    border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`,
+    borderTop: 'none',
+    height: '180px'
   };
+
+  const carouselTrackStyle = {
+    display: 'flex',
+    transition: 'transform 0.3s ease',
+    height: '100%',
+    alignItems: 'stretch'
+  };
+
+  const carouselCardStyle = (isSelected: boolean) => ({
+    minWidth: '250px',
+    maxWidth: '250px',
+    border: `2px solid ${isSelected ? (isDarkMode ? '#6b7280' : '#9ca3af') : (isDarkMode ? '#374151' : '#f3f4f6')}`,
+    borderRadius: '8px',
+    backgroundColor: isSelected
+      ? (isDarkMode ? '#374151' : '#f9fafb')
+      : (isDarkMode ? '#1f2937' : '#ffffff'),
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    position: 'relative' as const,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '8px',
+    padding: '12px',
+    margin: '8px',
+    boxShadow: isSelected
+      ? (isDarkMode ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)')
+      : (isDarkMode ? '0 2px 6px rgba(0,0,0,0.2)' : '0 2px 6px rgba(0,0,0,0.05)')
+  });
+
+  const navigationButtonStyle = (disabled: boolean) => ({
+    position: 'absolute' as const,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+    border: `1px solid ${isDarkMode ? '#475569' : '#e2e8f0'}`,
+    borderRadius: '50%',
+    width: '32px',
+    height: '32px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.5 : 1,
+    transition: 'all 0.2s ease',
+    zIndex: 10,
+    color: isDarkMode ? '#9ca3af' : '#6b7280'
+  });
 
   const templateCardStyle = (isSelected: boolean) => ({
     border: `2px solid ${isSelected ? (isDarkMode ? '#3b82f6' : '#2563eb') : (isDarkMode ? '#475569' : '#e2e8f0')}`,
@@ -448,116 +612,209 @@ const TemplateSelectorEnhanced: React.FC<TemplateSelectorEnhancedProps> = ({
         <MagnifyingGlassIcon style={searchIconStyle} />
       </div>
 
+      {/* Onglets de catégories style Windows */}
       <div style={categoryTabsStyle}>
         <button
-          style={categoryTabStyle(selectedCategory === 'all')}
+          className={getCategoryTabClasses(selectedCategory === 'all')}
           onClick={() => setSelectedCategory('all')}
         >
-          Tous ({templates.length})
+          <DocumentIcon style={{ width: '14px', height: '14px' }} />
+          <span>Tous ({templates.length})</span>
         </button>
         {categories.map(category => (
           <button
             key={category.id}
-            style={categoryTabStyle(selectedCategory === category.id)}
+            className={getCategoryTabClasses(selectedCategory === category.id)}
             onClick={() => setSelectedCategory(category.id)}
           >
-            <span>{category.icon}</span>
-            {category.name} ({category.templates.length})
+            {getCategoryIcon(category.name)}
+            <span>{category.name} ({category.templates.length})</span>
           </button>
         ))}
       </div>
 
-      <div style={templatesGridStyle}>
-        {filteredTemplates.map(template => (
-          <div
-            key={template.metadata.id}
-            style={templateCardStyle(selectedTemplate?.metadata.id === template.metadata.id)}
-            onClick={() => handleTemplateSelect(template)}
+      {/* Carousel de templates */}
+      <div style={carouselContainerStyle}>
+        {canGoPrev && (
+          <button
+            style={navigationButtonStyle(false)}
+            onClick={handlePrev}
+            title="Précédent"
           >
-            <div style={templateHeaderStyle}>
-              <div>
-                <h3 style={templateTitleStyle}>
-                  <span>{template.metadata.preview || '📄'}</span>
-                  {template.metadata.name}
-                </h3>
-                <div style={templateMetaStyle}>
-                  <span style={{
-                    backgroundColor: isDarkMode ? '#374151' : '#f3f4f6',
-                    color: '#fff',
-                    fontSize: '10px',
-                    padding: '2px 6px',
-                    borderRadius: '4px'
+            <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
+          </button>
+        )}
+
+        {canGoNext && (
+          <button
+            style={{ ...navigationButtonStyle(false), right: '8px' }}
+            onClick={handleNext}
+            title="Suivant"
+          >
+            <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
+          </button>
+        )}
+
+        <div
+          ref={carouselRef}
+          style={{
+            ...carouselTrackStyle,
+            transform: `translateX(-${carouselIndex * 266}px)` // 250px + 16px margin
+          }}
+        >
+          {filteredTemplates.map(template => (
+            <div
+              key={template.metadata.id}
+              style={carouselCardStyle(selectedTemplate?.metadata.id === template.metadata.id)}
+              onClick={() => handleTemplateSelect(template)}
+            >
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '4px'
+              }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h4 style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: isDarkMode ? '#f1f5f9' : '#1e293b',
+                    margin: '0 0 4px 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
                   }}>
-                    {template.metadata.category}
-                  </span>
-                  {template.metadata.isPremium && (
                     <span style={{
-                      backgroundColor: '#f59e0b',
-                      color: '#fff',
-                      fontSize: '10px',
-                      padding: '2px 6px',
-                      borderRadius: '4px'
+                      color: isDarkMode ? '#9ca3af' : '#6b7280',
+                      display: 'flex',
+                      alignItems: 'center'
                     }}>
-                      PRO
+                      {getTemplateIcon(template)}
                     </span>
-                  )}
+                    {template.metadata.name}
+                  </h4>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '10px',
+                    color: isDarkMode ? '#9ca3af' : '#6b7280'
+                  }}>
+                    <span style={{
+                      backgroundColor: isDarkMode ? '#4b5563' : '#e5e7eb',
+                      color: isDarkMode ? '#d1d5db' : '#4b5563',
+                      padding: '1px 4px',
+                      borderRadius: '3px',
+                      fontSize: '9px',
+                      fontWeight: '500'
+                    }}>
+                      {template.metadata.category}
+                    </span>
+                    {template.metadata.isPremium && (
+                      <span style={{
+                        backgroundColor: isDarkMode ? '#6b7280' : '#9ca3af',
+                        color: '#fff',
+                        padding: '1px 4px',
+                        borderRadius: '3px',
+                        fontSize: '9px',
+                        fontWeight: '500'
+                      }}>
+                        PRO
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div style={templateActionsStyle}>
-                <button
-                  style={actionButtonStyle}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPreviewTemplate(template);
-                  }}
-                  title="Aperçu"
-                >
-                  <EyeIcon style={{ width: '16px', height: '16px' }} />
-                </button>
-                {!template.metadata.isDefault && (
-                  <>
+                <div style={{
+                  display: 'flex',
+                  gap: '4px',
+                  flexShrink: 0
+                }}>
+                  <button
+                    style={{
+                      ...actionButtonStyle,
+                      padding: '4px',
+                      minWidth: '24px',
+                      height: '24px'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewTemplate(template);
+                    }}
+                    title="Aperçu"
+                  >
+                    <EyeIcon style={{ width: '12px', height: '12px' }} />
+                  </button>
+                  {!template.metadata.isDefault && (
                     <button
-                      style={actionButtonStyle}
+                      style={{
+                        ...actionButtonStyle,
+                        padding: '4px',
+                        minWidth: '24px',
+                        height: '24px'
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDuplicate(template);
                       }}
                       title="Dupliquer"
                     >
-                      <DocumentDuplicateIcon style={{ width: '16px', height: '16px' }} />
+                      <DocumentDuplicateIcon style={{ width: '12px', height: '12px' }} />
                     </button>
-                    <button
-                      style={actionButtonStyle}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(template.metadata.id);
-                      }}
-                      title="Supprimer"
-                    >
-                      <TrashIcon style={{ width: '16px', height: '16px' }} />
-                    </button>
-                  </>
-                )}
-                <button
-                  style={actionButtonStyle}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleExport(template);
-                  }}
-                  title="Exporter"
-                >
-                  <ArrowDownTrayIcon style={{ width: '16px', height: '16px' }} />
-                </button>
+                  )}
+                </div>
+              </div>
+              <p style={{
+                fontSize: '11px',
+                color: isDarkMode ? '#d1d5db' : '#6b7280',
+                lineHeight: '1.3',
+                margin: '0',
+                overflow: 'hidden',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+              }}>
+                {template.metadata.description}
+              </p>
+              <div style={{
+                fontSize: '10px',
+                color: isDarkMode ? '#6b7280' : '#9ca3af',
+                marginTop: 'auto'
+              }}>
+                {template.metadata.author} • v{template.metadata.version}
               </div>
             </div>
-            <p style={templateDescriptionStyle}>
-              {template.metadata.description}
-            </p>
-            <div style={{ fontSize: '12px', color: isDarkMode ? '#9ca3af' : '#6b7280' }}>
-              Créé par {template.metadata.author} • Version {template.metadata.version}
-            </div>
+          ))}
+        </div>
+
+        {/* Indicateurs de position */}
+        {filteredTemplates.length > 3 && (
+          <div style={{
+            position: 'absolute',
+            bottom: '8px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '4px'
+          }}>
+            {Array.from({ length: Math.ceil(filteredTemplates.length / 3) }).map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: i === Math.floor(carouselIndex / 3)
+                    ? (isDarkMode ? '#6b7280' : '#9ca3af')
+                    : (isDarkMode ? '#4b5563' : '#d1d5db'),
+                  transition: 'all 0.2s ease'
+                }}
+              />
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       {filteredTemplates.length === 0 && !isLoading && (

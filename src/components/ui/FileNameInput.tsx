@@ -39,129 +39,38 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
     { value: 'md', label: 'MD' },
     { value: 'html', label: 'HTML' }
   ];
-  const labelStyle = {
-    display: 'block',
-    marginBottom: '12px',
-    fontSize: '15px',
-    fontWeight: '600',
-    color: isDarkMode ? '#f1f5f9' : '#1e293b'
+
+  // Classes Tailwind pour le bouton export avec dégradé gris
+  const getExportButtonClasses = () => {
+    return "px-6 py-1.5 bg-gradient-to-r from-gray-500 to-gray-600 border-0 rounded-lg text-base font-semibold text-white cursor-pointer transition-all duration-200 whitespace-nowrap flex items-center gap-2 hover:from-gray-600 hover:to-gray-700 hover:transform hover:translate-y-[-1px] hover:shadow-lg active:scale-95";
   };
 
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: '6px',
-    alignItems: 'center',
-    marginBottom: '12px'
+  // Classes pour le champ input
+  const getInputClasses = () => {
+    return `flex-1 px-4 py-1 border-2 rounded-lg text-base outline-none transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+      isDarkMode
+        ? 'bg-gray-800 text-gray-100 border-gray-600 focus:ring-blue-400 focus:border-blue-400'
+        : 'bg-white text-gray-900 border-gray-300'
+    }`;
   };
 
-  const formatButtonStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '6px 16px',
-    backgroundColor: isDarkMode ? '#374151' : '#f3f4f6',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '15px',
-    fontWeight: '500',
-    color: isDarkMode ? '#f9fafb' : '#374151',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    whiteSpace: 'nowrap' as const,
-    minWidth: '70px',
-    justifyContent: 'center'
-  };
-
-  const dropdownStyle: React.CSSProperties = {
-    position: 'absolute' as const,
-    top: '100%',
-    right: '0',
-    marginTop: '4px',
-    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-    border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
-    borderRadius: '8px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    zIndex: 50,
-    minWidth: '120px',
-    overflow: 'hidden'
-  };
-
-  const dropdownItemStyle = {
-    padding: '12px 16px',
-    fontSize: '14px',
-    fontWeight: '500',
-    color: isDarkMode ? '#f9fafb' : '#111827',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    border: 'none',
-    backgroundColor: 'transparent',
-    width: '100%',
-    textAlign: 'left' as const,
-    display: 'block'
-  };
-
-  const inputStyle = {
-    flex: 1,
-    padding: '4px 16px',
-    border: `2px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
-    borderRadius: '8px',
-    fontSize: '15px',
-    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-    color: isDarkMode ? '#f9fafb' : '#111827',
-    outline: 'none',
-    transition: 'all 0.2s ease'
-  };
-
-  const buttonStyle = {
-    padding: '6px 24px',
-    background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '15px',
-    fontWeight: '600',
-    color: '#ffffff',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    whiteSpace: 'nowrap' as const,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
-  };
-
-  const iconStyle = {
-    width: '16px',
-    height: '16px'
+  // Classes pour le bouton de format
+  const getFormatButtonClasses = () => {
+    return `flex items-center gap-1 px-4 py-1.5 border-0 rounded-lg text-base font-medium cursor-pointer transition-all duration-200 whitespace-nowrap min-w-[70px] justify-center ${
+      isDarkMode
+        ? 'bg-gray-700 text-gray-100 hover:bg-gray-600'
+        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+    }`;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value);
   };
 
-  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = isDarkMode ? '#60a5fa' : '#3b82f6';
-    e.target.style.boxShadow = `0 0 0 3px ${isDarkMode ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.1)'}`;
-  };
-
-  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = isDarkMode ? '#374151' : '#e5e7eb';
-    e.target.style.boxShadow = 'none';
-  };
-
   const handleButtonClick = () => {
     if (onButtonClick) {
       onButtonClick();
     }
-  };
-
-  const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.background = 'linear-gradient(135deg, #4b5563 0%, #374151 100%)';
-    e.currentTarget.style.transform = 'translateY(-1px)';
-  };
-
-  const handleButtonLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.background = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
-    e.currentTarget.style.transform = 'translateY(0)';
   };
 
   const handleFormatClick = () => {
@@ -174,18 +83,6 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
     if (onFormatChange) {
       onFormatChange(format);
     }
-  };
-
-  const handleFormatHover = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#e5e7eb';
-  };
-
-  const handleFormatLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#f3f4f6';
-  };
-
-  const handleDropdownItemHover = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#f3f4f6';
   };
 
   React.useEffect(() => {
@@ -209,43 +106,48 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
 
   return (
     <div>
-      <label style={labelStyle}>
+      <label className={`
+        block mb-3 text-base font-semibold
+        ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}
+      `}>
         {label}
       </label>
-      <div style={containerStyle}>
+      <div className="flex flex-row gap-1.5 items-center mb-3">
         <input
           type="text"
           value={value}
           onChange={handleInputChange}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
           placeholder={placeholder}
-          style={inputStyle}
+          className={getInputClasses()}
         />
 
-        <div style={{ position: 'relative' }} id="format-dropdown">
+        <div className="relative" id="format-dropdown">
           <button
             onClick={handleFormatClick}
-            onMouseEnter={handleFormatHover}
-            onMouseLeave={handleFormatLeave}
-            style={formatButtonStyle}
+            className={getFormatButtonClasses()}
             type="button"
             aria-label="Select export format"
             aria-expanded={showFormatDropdown}
             aria-haspopup="true"
           >
             {selectedFormat.toUpperCase()}
-            <ChevronDownIcon style={{ width: '14px', height: '14px' }} />
+            <ChevronDownIcon className="w-3.5 h-3.5" />
           </button>
 
           {showFormatDropdown && (
-            <div style={dropdownStyle} role="menu" aria-label="Format options">
+            <div className={`
+              absolute top-full right-0 mt-1 rounded-lg shadow-lg z-50 min-w-[120px] overflow-hidden
+              ${isDarkMode ? 'bg-gray-800 border border-gray-600' : 'bg-white border border-gray-200'}
+            `} role="menu" aria-label="Format options">
               {formats.map((format) => (
                 <button
                   key={format.value}
                   onClick={() => handleFormatSelect(format.value)}
-                  onMouseEnter={handleDropdownItemHover}
-                  style={dropdownItemStyle}
+                  className={`
+                    px-4 py-3 text-sm font-medium cursor-pointer transition-all duration-200
+                    border-0 bg-transparent w-full text-left block
+                    ${isDarkMode ? 'text-gray-100 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-100'}
+                  `}
                   type="button"
                   role="menuitem"
                 >
@@ -257,13 +159,11 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
         </div>
         <button
           onClick={handleButtonClick}
-          onMouseEnter={handleButtonHover}
-          onMouseLeave={handleButtonLeave}
-          style={buttonStyle}
+          className={getExportButtonClasses()}
           type="button"
         >
           {showIcon && (
-            <DocumentArrowDownIcon style={iconStyle} />
+            <DocumentArrowDownIcon className="w-4 h-4" />
           )}
           {buttonText}
         </button>

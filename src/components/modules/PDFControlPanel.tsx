@@ -2,6 +2,7 @@ import React from 'react';
 import { Cog6ToothIcon, SwatchIcon, MagnifyingGlassIcon, MinusIcon, PlusIcon, ArrowPathIcon, DocumentTextIcon, PhotoIcon, ArrowsPointingOutIcon, AdjustmentsHorizontalIcon, SparklesIcon, BookOpenIcon, AcademicCapIcon, CircleStackIcon } from '@heroicons/react/24/outline';
 import FileNameInput from '../ui/FileNameInput';
 import { PDFOptions } from '../../types/app';
+import PDFControlPanelSkeleton from './PDFControlPanelSkeleton';
 
 interface PDFControlPanelProps {
   pdfOptions: PDFOptions;
@@ -15,6 +16,7 @@ interface PDFControlPanelProps {
   previewZoom: number;
   onZoomChange: (zoom: number) => void;
   isDarkMode: boolean;
+  isLoading?: boolean;
   exportFormat?: string;
 }
 
@@ -30,6 +32,7 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
   previewZoom,
   onZoomChange,
   isDarkMode,
+  isLoading = false,
   exportFormat = "pdf"
 }) => {
   const panelStyle = {
@@ -91,6 +94,11 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
   const updateOption = (key: keyof PDFOptions, value: any) => {
     onOptionsChange({ ...pdfOptions, [key]: value });
   };
+
+  // Afficher le skeleton pendant le chargement
+  if (isLoading) {
+    return <PDFControlPanelSkeleton isDarkMode={isDarkMode} />;
+  }
 
   return (
     <div style={panelStyle}>

@@ -3,6 +3,7 @@ import { PencilIcon, } from '@heroicons/react/24/outline';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import MarkdownToolbar from './MarkdownToolbar';
+import MarkdownEditorSkeleton from './MarkdownEditorSkeleton';
 
 interface MarkdownEditorProps {
   markdown: string;
@@ -10,6 +11,7 @@ interface MarkdownEditorProps {
   showPreview: boolean;
   onTogglePreview: () => void;
   isDarkMode: boolean;
+  isLoading?: boolean;
 }
 
 const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
@@ -17,7 +19,8 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   onChange,
   showPreview,
   onTogglePreview,
-  isDarkMode
+  isDarkMode,
+  isLoading = false
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -163,6 +166,11 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       textarea.selectionStart = textarea.selectionEnd = newPosition;
     }, 0);
   };
+  // Afficher le skeleton pendant le chargement
+  if (isLoading) {
+    return <MarkdownEditorSkeleton showPreview={showPreview} isDarkMode={isDarkMode} />;
+  }
+
   return (
     <section style={editorContainerStyle} aria-labelledby="editor-title">
       <div style={headerStyle}>

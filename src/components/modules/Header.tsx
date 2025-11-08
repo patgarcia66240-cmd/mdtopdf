@@ -7,6 +7,7 @@ import {
   BookOpenIcon,
   ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
+import HeaderSkeleton from './HeaderSkeleton';
 
 interface HeaderProps {
   title: string;
@@ -14,6 +15,7 @@ interface HeaderProps {
   showTemplates: boolean;
   showExport: boolean;
   isDarkMode: boolean;
+  isLoading?: boolean;
   onTabChange: (tab: 'editor' | 'import' | 'templates' | 'export') => void;
   onThemeToggle: () => void;
   onAdvancedExport?: () => void;
@@ -25,6 +27,7 @@ const Header: React.FC<HeaderProps> = ({
   showTemplates,
   showExport,
   isDarkMode,
+  isLoading = false,
   onTabChange,
   onThemeToggle,
   onAdvancedExport
@@ -33,19 +36,24 @@ const Header: React.FC<HeaderProps> = ({
 
   // Déterminer les classes Tailwind pour les boutons d'onglets
   const getTabButtonClasses = (isActive: boolean) => {
-    const baseClasses = "px-5 py-2 border-0 rounded-t-lg text-sm font-medium cursor-pointer transition-all duration-200 border-b-2 min-w-[120px] flex items-center justify-start gap-0 outline-none appearance-none transform translate-y-0 hover:translate-y-[-1px] hover:shadow-lg";
+    const baseClasses = "px-5 py-2 border border-b-2 rounded-t-lg text-sm font-medium cursor-pointer transition-all duration-200 min-w-[120px] flex items-center justify-start gap-0 outline-none appearance-none transform translate-y-0 hover:translate-y-[-1px] hover:shadow-lg";
 
     if (isActive) {
-      return `${baseClasses} bg-gradient-to-r from-gray-500 to-gray-600 text-white border-b-gray-600 dark:border-b-gray-500`;
+      return `${baseClasses} bg-gradient-to-r from-gray-500 to-gray-600 text-white border-gray-600 border-b-gray-600 dark:border-gray-500 dark:border-b-gray-500`;
     }
 
     return `${baseClasses} ${isDarkMode
-      ? 'bg-gray-700 text-gray-100 border-b-transparent hover:bg-gray-600 hover:border-b-gray-500'
-      : 'bg-gray-50 text-gray-700 border-b-transparent hover:bg-gray-200 hover:border-b-gray-400'
+      ? 'bg-gray-700 text-gray-100 border-gray-600 border-b-transparent hover:bg-gray-600 hover:border-b-gray-500'
+      : 'bg-gray-50 text-gray-700 border-gray-300 border-b-transparent hover:bg-gray-200 hover:border-b-gray-400'
     }`;
   };
 
  
+
+  // Afficher le skeleton pendant le chargement
+  if (isLoading) {
+    return <HeaderSkeleton isDarkMode={isDarkMode} />;
+  }
 
   return (
     <header className={`
@@ -126,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({
 
         {onAdvancedExport && (
           <button
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-500 border-blue-500 rounded-lg text-white text-sm font-semibold cursor-pointer transition-all duration-200 outline-none hover:bg-blue-600 border"
+            className="ml-4 flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 border-0 rounded-lg text-white text-sm font-semibold cursor-pointer transition-all duration-200 outline-none hover:from-gray-600 hover:to-gray-700 hover:transform hover:translate-y-[-1px] hover:shadow-lg active:scale-95"
             onClick={onAdvancedExport}
             title="Export avancé multi-formats"
           >

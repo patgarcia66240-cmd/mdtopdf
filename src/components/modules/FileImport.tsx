@@ -6,10 +6,12 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import FileImportSkeleton from './FileImportSkeleton';
 
 interface FileImportProps {
   onFileImport: (content: string, fileName: string) => void;
   isDarkMode: boolean;
+  isLoading?: boolean;
 }
 
 interface ImportedFile {
@@ -21,8 +23,13 @@ interface ImportedFile {
 
 const FileImport: React.FC<FileImportProps> = ({
   onFileImport,
-  isDarkMode
+  isDarkMode,
+  isLoading = false
 }) => {
+  // Afficher le skeleton pendant le chargement
+  if (isLoading) {
+    return <FileImportSkeleton isDarkMode={isDarkMode} />;
+  }
   const [isDragging, setIsDragging] = useState(false);
   const [importedFiles, setImportedFiles] = useState<ImportedFile[]>([]);
   const [error, setError] = useState<string | null>(null);

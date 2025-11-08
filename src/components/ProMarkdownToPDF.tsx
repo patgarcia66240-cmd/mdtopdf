@@ -22,6 +22,14 @@ const ProMarkdownToPDFRefactored: React.FC = () => {
 
   // États
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isEditorLoading, setIsEditorLoading] = useState(false);
+
+  // Tempo automatique de 1 seconde au montage
+  React.useEffect(() => {
+    setIsEditorLoading(true);
+    const timer = setTimeout(() => setIsEditorLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
   const [markdown, setMarkdown] = useState(`# 📚 Document Complet sur 4 Pages 📄
 
 ## Page 1: Introduction et Vue d'Ensemble 🎯
@@ -343,11 +351,34 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
 
 
   const [fileName, setFileName] = useState('document');
-  const [showTemplates, setShowTemplates] = useState(false);
-  const [showExport, setShowExport] = useState(false);
-  const [showImport, setShowImport] = useState(false);
-  const [showOptions, setShowOptions] = useState(true);
-  const [showPreview, setShowPreview] = useState(true);
+
+  // Restaurer l'état des onglets depuis le localStorage
+  const getInitialTabStates = () => {
+    if (typeof window !== 'undefined') {
+      const savedTab = localStorage.getItem('mdtopdf-active-tab');
+      return {
+        showTemplates: savedTab === 'templates',
+        showExport: savedTab === 'export',
+        showImport: savedTab === 'import',
+        showOptions: savedTab === 'options' || !savedTab, // Par défaut
+        showPreview: true
+      };
+    }
+    return {
+      showTemplates: false,
+      showExport: false,
+      showImport: false,
+      showOptions: true,
+      showPreview: true
+    };
+  };
+
+  const initialStates = getInitialTabStates();
+  const [showTemplates, setShowTemplates] = useState(initialStates.showTemplates);
+  const [showExport, setShowExport] = useState(initialStates.showExport);
+  const [showImport, setShowImport] = useState(initialStates.showImport);
+  const [showOptions, setShowOptions] = useState(initialStates.showOptions);
+  const [showPreview, setShowPreview] = useState(initialStates.showPreview);
   const [previewTheme, setPreviewTheme] = useState('modern');
   const [previewZoom, setPreviewZoom] = useState(100);
   const [exportFormat, setExportFormat] = useState('pdf');
@@ -490,6 +521,11 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
   };
 
   const handleTabChange = (tab: 'editor' | 'import' | 'templates' | 'export') => {
+    // Sauvegarder l'onglet sélectionné dans le localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mdtopdf-active-tab', tab === 'editor' ? 'options' : tab);
+    }
+
     switch (tab) {
       case 'editor':
         setShowTemplates(false);
@@ -537,10 +573,27 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
         showTemplates={showTemplates}
         showExport={showExport}
         isDarkMode={isDarkMode}
+        isLoading={isEditorLoading}
         onTabChange={handleTabChange}
         onThemeToggle={() => setIsDarkMode(!isDarkMode)}
         onAdvancedExport={() => setShowAdvancedExport(true)}
       />
+
+      {/* Carousel de templates compact au-dessus de l'éditeur */}
+      {showTemplates && (
+        <div style={{
+          marginBottom: '16px',
+          padding: '0 4px'
+        }}>
+          <TemplateSelectorEnhanced
+            isDarkMode={isDarkMode}
+            onTemplateSelect={(template) => {
+              setSelectedTemplate(template);
+              handleApplyTemplate('', template);
+            }}
+          />
+        </div>
+      )}
 
       {/* Main Content */}
       <main style={mainContentStyle} role="main">
@@ -558,6 +611,7 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
               previewZoom={previewZoom}
               onZoomChange={setPreviewZoom}
               isDarkMode={isDarkMode}
+              isLoading={isEditorLoading}
               exportFormat={exportFormat}
             />
           )}
@@ -565,6 +619,7 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
             <FileImport
               onFileImport={handleFileImport}
               isDarkMode={isDarkMode}
+              isLoading={isEditorLoading}
             />
           )}
 
@@ -574,16 +629,8 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
             showPreview={false}
             onTogglePreview={() => setShowPreview(!showPreview)}
             isDarkMode={isDarkMode}
+            isLoading={isEditorLoading}
           />
-          {showTemplates && (
-            <TemplateSelectorEnhanced
-              isDarkMode={isDarkMode}
-              onTemplateSelect={(template) => {
-                setSelectedTemplate(template);
-                handleApplyTemplate('', template);
-              }}
-            />
-          )}
           {showExport && (
             <ExportPanel
               onExportPDF={handleExportPDF}
@@ -609,6 +656,7 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
               previewZoom={previewZoom}
               onZoomChange={setPreviewZoom}
               isDarkMode={isDarkMode}
+              isLoading={isEditorLoading}
               currentPage={currentPage}
               setCurrentPage={setCurrentPage}
               totalPages={totalPages}
