@@ -94,11 +94,10 @@ const StreamingFileProcessor: React.FC<StreamingFileProcessorProps> = ({
   useEffect(() => {
     if (isProcessing && progress > 0 && startTimeRef.current > 0) {
       const elapsed = (Date.now() - startTimeRef.current) / 1000; // secondes
-      const speed = (progress / 100) * fileSize / elapsed; // octets/secondes
+      const speed = elapsed > 0.1 ? (progress / 100) * fileSize / elapsed : 0;
       setProcessingSpeed(speed);
     }
   }, [progress, isProcessing, fileSize]);
-
   // Traitement par streaming du fichier
   const processFileStreaming = useCallback(async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -258,11 +257,7 @@ const StreamingFileProcessor: React.FC<StreamingFileProcessorProps> = ({
     position: 'relative' as const
   };
 
-  const containerHoverStyle = {
-    ...containerStyle,
-    borderColor: isDarkMode ? '#60a5fa' : '#3b82f6',
-    backgroundColor: isDarkMode ? '#1e3a8a' : '#dbeafe'
-  };
+
 
   const buttonStyle = {
     backgroundColor: isDarkMode ? '#3b82f6' : '#2563eb',
@@ -353,7 +348,14 @@ const StreamingFileProcessor: React.FC<StreamingFileProcessorProps> = ({
           </div>
 
           <div style={progressStyle}>
-            <div style={{ ...progressBarStyle, width: `${progress}%` }} />
+            <div 
+              role="progressbar"
+              aria-valuenow={Math.round(progress)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Traitement de ${fileName}`}
+              style={{ ...progressBarStyle, width: `${progress}%` }}
+            />
           </div>
 
           <div style={infoStyle}>
