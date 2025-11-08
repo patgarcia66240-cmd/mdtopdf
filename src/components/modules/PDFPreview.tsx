@@ -221,10 +221,10 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
       font-size: ${currentTheme.fontSize};
     `;
 
-    html = html.replace(/<h1([^>]*)>/g, `<h1$1 class="text-slate-900 text-lg font-black my-4" >`);
-    html = html.replace(/<h2([^>]*)>/g, `<h2$1 class="text-slate-700 text-base font-black my-3" `);
-    html = html.replace(/<h3([^>]*)>/g, `<h3$1 class="text-slate-600 text-sm font-black my-3" >`);
-    html = html.replace(/<h4([^>]*)>/g, `<h4$1 class="text-slate-500 text-xs font-bold my-2" >`);
+    html = html.replace(/<h1([^>]*)>/g, `<h1$1 class="text-slate-900 text-lg font-black my-4">`);
+    html = html.replace(/<h2([^>]*)>/g, `<h2$1 class="text-slate-700 text-base font-black my-3">`);
+    html = html.replace(/<h3([^>]*)>/g, `<h3$1 class="text-slate-600 text-sm font-black my-3">`);
+    html = html.replace(/<h4([^>]*)>/g, `<h4$1 class="text-slate-500 text-xs font-bold my-2">`);
 
     // Styles pour le texte gras (strong et b)
     html = html.replace(/<strong([^>]*)>/g, `<strong$1 style="font-weight: 700; color: inherit;">`);
@@ -368,40 +368,67 @@ const PDFPreview = forwardRef<HTMLDivElement, PDFPreviewProps>(({
   };
 
   const renderAllPages = () => {
-    const pages = [];
+    return (
+      <div className="relative">
+        {/* Conteneur scrollable avec hauteur d'une seule page A4 */}
+        <div
+          className="overflow-y-auto overflow-x-hidden"
+          style={{
+            height: '297mm', // Hauteur exacte d'une page A4
+            width: '210mm'   // Largeur exacte d'une page A4
+          }}
+        >
+          <div className="space-y-0">
+            {pageContents.map((pageContent, i) => (
+              <div key={i} className="relative">
+                {/* Page A4 */}
+                <div className="bg-white p-[10mm] pb-[5mm] shadow-lg w-[210mm] h-[297mm] box-border overflow-hidden relative">
+                  {/* Header avec numéro de page */}
+                  <div className="absolute top-0 left-0 right-0 h-[6mm] bg-gray-50 z-10 flex justify-center items-center border-b border-gray-200">
+                    <span className="text-xs text-gray-700 font-semibold px-2.5 py-1 bg-white rounded-full border border-gray-300 shadow-sm">
+                      Page {i + 1} / {totalPages}
+                    </span>
+                  </div>
 
-    for (let i = 0; i < totalPages; i++) {
-      const pageContent = pageContents[i] || processedHTML || '';
+                  {/* Contenu principal */}
+                  <div className="h-[calc(100%)] overflow-hidden pt-[1mm]">
+                    <div
+                      className={getThemeClasses()}
+                      dangerouslySetInnerHTML={{ __html: pageContent || processedHTML || '' }}
+                    />
+                  </div>
+                </div>
 
-      pages.push(
-        <div key={i} className={`relative ${i < totalPages - 1 ? 'mb-5' : ''}`}>
-          {/* Page A4 */}
-          <div className="bg-white p-[10mm] pb-[5mm] rounded shadow-lg w-[210mm] h-[297mm] box-border overflow-hidden relative">
-            {/* Header avec numéro de page (lecture seule pour mode "tout afficher") */}
-            <div className="absolute top-0 left-0 right-0 h-[6mm] bg-gray-50 z-10 flex justify-center items-center border-b border-gray-200">
-              <span className="text-xs text-gray-700 font-semibold px-2.5 py-1 bg-white rounded-full border border-gray-300 shadow-sm">
-                Page {i + 1} / {totalPages}
-              </span>
-            </div>
-
-            {/* Contenu principal - hauteur limitée pour protéger le header */}
-            <div className="h-[calc(100%)] overflow-hidden pt-[1mm]">
-              <div
-                className={getThemeClasses()}
-                dangerouslySetInnerHTML={{ __html: pageContent }}
-              />
-            </div>
+                {/* Indicateur de page suivante (optionnel) */}
+                {i < totalPages - 1 && (
+                  <div className="h-8 flex items-center justify-center">
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                      <span>Page {i + 2}</span>
+                      <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-
-          {/* Séparateur de page */}
-          {i < totalPages - 1 && (
-            <div className={`absolute bottom-[-10px] left-0 right-0 h-px ${isDarkMode ? 'bg-slate-600' : 'bg-gray-300'} flex items-center justify-center`}>
-            </div>
-          )}
         </div>
-      );
-    }
-    return pages;
+
+        {/* Indicateur de scroll */}
+        {totalPages > 1 && (
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex flex-col gap-1">
+            {pageContents.map((_, i) => (
+              <div
+                key={i}
+                className={`w-1 h-2 rounded-full transition-colors ${
+                  i === 0 ? 'bg-blue-500' : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Afficher le skeleton pendant le chargement

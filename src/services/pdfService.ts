@@ -9,8 +9,13 @@ export class PDFService {
 
     // Traiter les sauts de page AVANT la conversion markdown
     let processedMarkdown = markdown;
+
+    // Détecter les marqueurs de page explicites avant la conversion markdown
     processedMarkdown = processedMarkdown.replace(/<!--\s*pagebreak\s*-->|<!--\s*newpage\s*-->/gi, '\n<!--PAGEBREAK-->\n');
     processedMarkdown = processedMarkdown.replace(/\\pagebreak|\\newpage/gi, '\n<!--PAGEBREAK-->\n');
+    processedMarkdown = processedMarkdown.replace(/^---?\s*page\s*break\s*---?$/gmi, '\n<!--PAGEBREAK-->\n');
+    processedMarkdown = processedMarkdown.replace(/^\[pagebreak\]$/gmi, '\n<!--PAGEBREAK-->\n');
+    processedMarkdown = processedMarkdown.replace(/^---\s*PAGE\s*\d+\s*---$/gmi, '\n<!--PAGEBREAK-->\n');
 
     // Configuration de marked
     const markedOptions = {
@@ -25,6 +30,11 @@ export class PDFService {
     };
 
     let html = await marked(processedMarkdown, markedOptions);
+
+    // Détecter les titres de page après conversion markdown (ex: <h2>Page 1</h2>, <h3>Page 2</h2>, etc.)
+    html = html.replace(/<h([1-6])[^>]*>\s*page\s*\d+\s*<\/h\1>/gi, '<div style="page-break-before: always; clear: both;"></div>');
+    html = html.replace(/<h([1-6])[^>]*>\s*Page\s*\d+\s*<\/h\1>/gi, '<div style="page-break-before: always; clear: both;"></div>');
+    html = html.replace(/<h([1-6])[^>]*>\s*PAGE\s*\d+\s*<\/h\1>/gi, '<div style="page-break-before: always; clear: both;"></div>');
 
     // Remplacer les marqueurs de saut de page par des divs avec style CSS
     html = html.replace(/<!--PAGEBREAK-->/gi, '<div style="page-break-before: always; clear: both;"></div>');
@@ -49,9 +59,10 @@ export class PDFService {
       const parts = html.split(pageBreakPattern);
       const pages: string[] = [];
 
-      parts.forEach((part, _) => {
-        if (part.trim()) {
-          pages.push(part.trim());
+      parts.forEach((part, index) => {
+        const cleanPart = part.trim();
+        if (cleanPart) {
+          pages.push(cleanPart);
         }
       });
 

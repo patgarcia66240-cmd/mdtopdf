@@ -8,14 +8,14 @@ import {
   FolderOpenIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { Template, TemplateStyles, TemplateLayout } from '@/types/app';
+import {  TemplateStyles, TemplateLayout } from '@/types/app';
 
 // Type pour TemplateManager qui inclut le content obligatoire
 export interface TemplateWithContent {
   id: string;
   name: string;
   description: string;
-  category: 'professional' | 'academic' | 'creative' | 'custom';
+  category: 'business' | 'academic' | 'creative' | 'technical'|'custom';
   styles: TemplateStyles;
   layout: TemplateLayout;
   preview: string;
@@ -31,7 +31,7 @@ interface TemplateFormData {
   description: string;
   content: string;
   style: LegacyStyle;
-  category: 'professional' | 'academic' | 'creative' | 'custom';
+  category:'business' | 'academic' | 'creative' | 'technical' | 'custom';
 }
 
 // Ancienne structure de style pour compatibilité
@@ -67,7 +67,7 @@ const createDefaultLayout = (): TemplateLayout => ({
 
 interface TemplateManagerProps {
   templates: TemplateWithContent[];
-  onTemplateSelect: (template: Template) => void;
+  onTemplateSelect: (template: TemplateWithContent) => void;
   onTemplateCreate: (template: TemplateWithContent) => void;
   onTemplateUpdate: (id: string, template: Partial<TemplateWithContent>) => void;
   onTemplateDelete: (id: string) => void;
@@ -101,7 +101,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
       backgroundColor: '#ffffff',
       borderColor: '#e5e7eb'
     },
-    category: 'professional'
+    category: 'business'
   });
 
   const defaultTemplates: TemplateWithContent[] = [
@@ -139,7 +139,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
       }),
       layout: createDefaultLayout(),
       preview: '/templates/business-report-preview.png',
-      category: 'professional',
+      category: 'business',
       colors: ['#1e293b', '#3b82f6', '#10b981', '#f59e0b'],
       isPro: false
     },
@@ -377,7 +377,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
         backgroundColor: '#ffffff',
         borderColor: '#e5e7eb'
       },
-      category: 'professional'
+      category: 'business'
     });
   };
 
@@ -533,7 +533,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
               </label>
               <select
                 value={formData.category}
-                onChange={(e) => setFormData({...formData, category: e.target.value as Template['category']})}                style={{
+                onChange={(e) => setFormData({...formData, category: e.target.value as TemplateWithContent['category']})}                style={{
                   width: '100%',
                   padding: '8px 12px',
                   border: `1px solid ${isDarkMode ? '#4b5563' : '#d1d5db'}`,

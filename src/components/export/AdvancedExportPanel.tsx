@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
-import { DocumentArrowDownIcon, Cog6ToothIcon, XMarkIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import {
+  DocumentArrowDownIcon,
+  Cog6ToothIcon,
+  XMarkIcon,
+  CheckIcon,
+  ExclamationTriangleIcon,
+  DocumentIcon,
+  DocumentTextIcon,
+  CodeBracketIcon,
+  PhotoIcon,
+  ChatBubbleLeftRightIcon
+} from '@heroicons/react/24/outline';
 import { useAdvancedExport } from '../../hooks/useAdvancedExport';
-import { ExportOptions, ExportProgress } from '../../services/AdvancedExportService';
+import { ExportOptions } from '../../services/AdvancedExportService';
 
 interface AdvancedExportPanelProps {
   markdown: string;
@@ -21,13 +32,15 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
     activeExports,
     cancelExport,
     isExporting,
-    exportProgress
+    
   } = useAdvancedExport();
 
   const [selectedFormats, setSelectedFormats] = useState<string[]>(['pdf']);
   const [filename, setFilename] = useState('document');
   const [quality, setQuality] = useState<'low' | 'medium' | 'high'>('medium');
   const [showOptions, setShowOptions] = useState(false);
+  const [hoveredFormat, setHoveredFormat] = useState<string | null>(null);
+  const [isButtonHovered, setIsButtonHovered] = useState(false);
   const [metadata, setMetadata] = useState({
     title: '',
     author: '',
@@ -36,12 +49,48 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
   });
 
   const formats = [
-    { id: 'pdf', name: 'PDF', icon: '📄', description: 'Format PDF universel' },
-    { id: 'docx', name: 'Word', icon: '📝', description: 'Document Microsoft Word' },
-    { id: 'html', name: 'HTML', icon: '🌐', description: 'Page web stylisée' },
-    { id: 'png', name: 'PNG', icon: '🖼️', description: 'Image haute qualité' },
-    { id: 'jpg', name: 'JPG', icon: '📷', description: 'Image compressée' },
-    { id: 'md', name: 'Markdown', icon: '📃', description: 'Texte brut Markdown' }
+    {
+      id: 'pdf',
+      name: 'PDF',
+      icon: DocumentIcon,
+      description: 'Format PDF universel',
+      color: '#dc2626'
+    },
+    {
+      id: 'docx',
+      name: 'Word',
+      icon: DocumentTextIcon,
+      description: 'Document Microsoft Word',
+      color: '#2563eb'
+    },
+    {
+      id: 'html',
+      name: 'HTML',
+      icon: CodeBracketIcon,
+      description: 'Page web stylisée',
+      color: '#ea580c'
+    },
+    {
+      id: 'png',
+      name: 'PNG',
+      icon: PhotoIcon,
+      description: 'Image haute qualité',
+      color: '#16a34a'
+    },
+    {
+      id: 'jpg',
+      name: 'JPG',
+      icon: PhotoIcon,
+      description: 'Image compressée',
+      color: '#ca8a04'
+    },
+    {
+      id: 'md',
+      name: 'Markdown',
+      icon: ChatBubbleLeftRightIcon,
+      description: 'Texte brut Markdown',
+      color: '#9333ea'
+    }
   ];
 
   const qualities = [
@@ -103,20 +152,37 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
     }
   };
 
-  const containerStyle = {
+  const overlayStyle = {
     position: 'fixed' as const,
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    zIndex: 1999,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    animation: 'fadeIn 0.3s ease-out'
+  };
+
+  const containerStyle = {
+    position: 'relative' as const,
     backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`,
     borderRadius: '16px',
-    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
     zIndex: 2000,
-    width: '600px',
-    maxHeight: '80vh',
+    width: '90%',
+    maxWidth: '640px',
+    maxHeight: '85vh',
     overflow: 'auto',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    transform: 'scale(1)',
+    animation: 'slideIn 0.3s ease-out',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
   };
 
   const headerStyle = {
@@ -148,14 +214,24 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
     marginBottom: '24px'
   };
 
-  const formatCardStyle = (selected: boolean) => ({
-    padding: '16px',
-    border: `2px solid ${selected ? (isDarkMode ? '#3b82f6' : '#2563eb') : (isDarkMode ? '#475569' : '#e2e8f0')}`,
-    borderRadius: '12px',
-    backgroundColor: selected ? (isDarkMode ? '#1e3a8a' : '#dbeafe') : (isDarkMode ? '#334155' : '#f8fafc'),
+  const formatCardStyle = (selected: boolean, isHovered: boolean = false) => ({
+    padding: '20px',
+    border: `2px solid ${selected ? (isDarkMode ? '#6b7280' : '#4b5563') : (isDarkMode ? '#475569' : '#e2e8f0')}`,
+    borderRadius: '16px',
+    backgroundColor: selected
+      ? (isDarkMode ? '#374151' : '#f1f5f9')
+      : isHovered
+        ? (isDarkMode ? '#4b5563' : '#f9fafb')
+        : (isDarkMode ? '#334155' : '#f8fafc'),
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    textAlign: 'center' as const
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    textAlign: 'center' as const,
+    transform: selected ? 'scale(1.02)' : (isHovered ? 'scale(1.01)' : 'scale(1)'),
+    boxShadow: selected
+      ? '0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+      : isHovered
+        ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+        : 'none'
   });
 
   const inputStyle = {
@@ -181,19 +257,51 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
   const buttonStyle = {
     width: '100%',
     padding: '16px',
-    backgroundColor: isDarkMode ? '#3b82f6' : '#2563eb',
-    color: 'white',
+    background: isExporting
+      ? (isDarkMode
+        ? 'linear-gradient(135deg, #374151 0%, #1f2937 50%, #111827 100%)'
+        : 'linear-gradient(135deg, #9ca3af 0%, #6b7280 50%, #4b5563 100%)'
+      )
+      : (isDarkMode
+        ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 40%, #374151 70%, #1f2937 100%)'
+        : 'linear-gradient(135deg, #9ca3af 0%, #6b7280 25%, #4b5563 55%, #374151 85%, #1f2937 100%)'
+      ),
+    color: '#ffffff',
     border: 'none',
     borderRadius: '12px',
     fontSize: '16px',
     fontWeight: '600',
     cursor: isExporting ? 'not-allowed' : 'pointer',
-    opacity: isExporting ? 0.6 : 1,
-    transition: 'all 0.2s ease',
+    opacity: isExporting ? 0.8 : 1,
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '12px'
+    gap: '12px',
+    boxShadow: isExporting
+      ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)'
+      : (isDarkMode
+        ? '0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
+        : '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.2)'
+      ),
+    transform: 'translateY(0)',
+    position: 'relative' as const,
+    overflow: 'hidden',
+    textShadow: isExporting ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.3)'
+  };
+
+  const buttonHoverStyle = {
+    ...buttonStyle,
+    background: isExporting
+      ? buttonStyle.background
+      : (isDarkMode
+        ? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 30%, #4b5563 60%, #374151 85%, #1f2937 100%)'
+        : 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 20%, #6b7280 50%, #4b5563 75%, #374151 95%, #1f2937 100%)'
+      ),
+    transform: 'translateY(-2px) scale(1.02)',
+    boxShadow: isDarkMode
+      ? '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)'
+      : '0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.25)'
   };
 
   const progressItemStyle = (status: string) => ({
@@ -209,13 +317,14 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
   });
 
   return (
-    <div style={containerStyle}>
-      <div style={headerStyle}>
-        <h2 style={titleStyle}>
-          <DocumentArrowDownIcon style={{ width: '24px', height: '24px' }} />
-          Export Avancé
-        </h2>
-        <button
+    <div style={overlayStyle} onClick={onClose}>
+      <div style={containerStyle} onClick={(e) => e.stopPropagation()}>
+        <div style={headerStyle}>
+          <h2 style={titleStyle}>
+            <DocumentArrowDownIcon style={{ width: '24px', height: '24px' }} />
+            Export Avancé
+          </h2>
+          <button
           onClick={onClose}
           style={{
             background: 'none',
@@ -261,29 +370,79 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
             Formats d'export
           </label>
           <div style={formatGridStyle}>
-            {formats.map(format => (
-              <div
-                key={format.id}
-                style={formatCardStyle(selectedFormats.includes(format.id))}
-                onClick={() => handleFormatToggle(format.id)}
-              >
-                <div style={{ fontSize: '24px', marginBottom: '4px' }}>{format.icon}</div>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: isDarkMode ? '#f1f5f9' : '#1e293b',
-                  marginBottom: '2px'
-                }}>
-                  {format.name}
-                </div>
-                <div style={{
-                  fontSize: '11px',
-                  color: isDarkMode ? '#94a3b8' : '#64748b'
-                }}>
-                  {format.description}
-                </div>
-              </div>
-            ))}
+            {formats.map(format => {
+                const Icon = format.icon;
+                const isSelected = selectedFormats.includes(format.id);
+                const isHovered = hoveredFormat === format.id;
+
+                return (
+                  <div
+                    key={format.id}
+                    style={formatCardStyle(isSelected, isHovered)}
+                    onClick={() => handleFormatToggle(format.id)}
+                    onMouseEnter={() => setHoveredFormat(format.id)}
+                    onMouseLeave={() => setHoveredFormat(null)}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      marginBottom: '12px',
+                      position: 'relative'
+                    }}>
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        backgroundColor: isSelected
+                          ? (isDarkMode ? '#6b7280' : '#e5e7eb')
+                          : (isDarkMode ? '#374151' : '#f1f5f9'),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.3s ease'
+                      }}>
+                        <Icon style={{
+                          width: '24px',
+                          height: '24px',
+                          color: isSelected
+                            ? '#6b7280'
+                            : (isDarkMode ? '#9ca3af' : '#6b7280'),
+                          transition: 'all 0.3s ease'
+                        }} />
+                      </div>
+                      {isSelected && (
+                        <CheckIcon
+                          style={{
+                            position: 'absolute',
+                            top: '-4px',
+                            right: '-4px',
+                            width: '16px',
+                            height: '16px',
+                            color: '#4b7280'
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div style={{
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      color: isDarkMode ? '#f1f5f9' : '#1e293b',
+                      marginBottom: '4px',
+                      transition: 'all 0.3s ease'
+                    }}>
+                      {format.name}
+                    </div>
+                    <div style={{
+                      fontSize: '12px',
+                      color: isDarkMode ? '#9ca3af' : '#6b7280',
+                      lineHeight: '1.4',
+                      transition: 'all 0.3s ease'
+                    }}>
+                      {format.description}
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
 
@@ -322,7 +481,7 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: isDarkMode ? '#3b82f6' : '#2563eb',
+              color: isDarkMode ? '#3b82f6' : '#777777',
               fontSize: '14px',
               fontWeight: '500'
             }}
@@ -419,17 +578,19 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
 
         {/* Bouton d'export */}
         <button
-          style={buttonStyle}
+          style={isButtonHovered && !isExporting && selectedFormats.length > 0 ? buttonHoverStyle : buttonStyle}
           onClick={handleExport}
           disabled={isExporting || selectedFormats.length === 0}
+          onMouseEnter={() => setIsButtonHovered(true)}
+          onMouseLeave={() => setIsButtonHovered(false)}
         >
           {isExporting ? (
             <>
               <div style={{
                 width: '20px',
                 height: '20px',
-                border: '2px solid white',
-                borderTop: '2px solid transparent',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                borderTop: '2px solid #ffffff',
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite'
               }} />
@@ -437,7 +598,11 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
             </>
           ) : (
             <>
-              <DocumentArrowDownIcon style={{ width: '20px', height: '20px' }} />
+              <DocumentArrowDownIcon style={{
+                width: '20px',
+                height: '20px',
+                color: '#ffffff'
+              }} />
               Exporter ({selectedFormats.length} format{selectedFormats.length > 1 ? 's' : ''})
             </>
           )}
@@ -458,7 +623,7 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
               <div key={exp.id} style={progressItemStyle(exp.status)}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   {exp.status === 'completed' && (
-                    <CheckCircleIcon style={{ width: '20px', height: '20px', color: '#10b981' }} />
+                    <CheckIcon style={{ width: '20px', height: '20px', color: '#10b981' }} />
                   )}
                   {exp.status === 'error' && (
                     <ExclamationTriangleIcon style={{ width: '20px', height: '20px', color: '#ef4444' }} />
@@ -518,8 +683,34 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
+
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: scale(0.95) translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+          }
+
+          @keyframes scaleIn {
+            from {
+              transform: scale(0);
+            }
+            to {
+              transform: scale(1);
+            }
+          }
         `}
       </style>
+      </div>
     </div>
   );
 };
