@@ -1,4 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
+// Environnements Vite
+const isProd = import.meta.env.PROD;
 
 /**
  * Hook pour optimiser les métriques Lighthouse
@@ -23,24 +25,28 @@ export const useLighthouseOptimization = () => {
 
     // Optimiser le rendu du contenu principal
     const optimizeMainContent = () => {
-      // Ajouter l'attribut loading="eager" au contenu au-dessus de la ligne
-      const aboveFoldElements = document.querySelectorAll('header, .main-header, h1');
-      aboveFoldElements.forEach(element => {
-        if (element instanceof HTMLImageElement) {
-          element.loading = 'eager';
-        }
-      });
+      // D�placer les �critures de style dans rAF pour limiter les reflows synchrones
+      requestAnimationFrame(() => {
+        // Eager uniquement pour des <img> au-dessus de la ligne
+        const aboveFoldImages = document.querySelectorAll('header img, .main-header img');
+        aboveFoldImages.forEach((img) => {
+          (img as HTMLImageElement).loading = 'eager';
+          (img as HTMLImageElement).decoding = 'async';
+        });
 
-      // Réduire le CLS (Cumulative Layout Shift)
-      document.body.style.overflowX = 'hidden';
+        // �viter de forcer overflowX ici; laisser le CSS g�rer
+        // document.body.style.overflowX = 'hidden';
 
-      // Ajouter des dimensions explicites aux images
-      const images = document.querySelectorAll('img');
-      images.forEach(img => {
-        if (!img.style.width && !img.style.height) {
-          img.style.width = '100%';
-          img.style.height = 'auto';
-        }
+        // Ajouter des dimensions seulement aux images du contenu si manquantes
+        const contentImages = document.querySelectorAll('.markdown-body img');
+        contentImages.forEach((node) => {
+          const el = node as HTMLImageElement;
+          const hasSize = el.getAttribute('width') || el.getAttribute('height') || el.style.width || el.style.height;
+          if (!hasSize && el.naturalWidth) {
+            el.style.width = '100%';
+            el.style.height = 'auto';
+          }
+        });
       });
     };
 
@@ -58,16 +64,20 @@ export const useLighthouseOptimization = () => {
       }
     };
 
-    // Importer web-vitals silencieusement
-    import('web-vitals').then((webVitals: any) => {
-      if (webVitals.getCLS) webVitals.getCLS(reportWebVitals);
-      if (webVitals.getFID) webVitals.getFID(reportWebVitals);
-      if (webVitals.getFCP) webVitals.getFCP(reportWebVitals);
-      if (webVitals.getLCP) webVitals.getLCP(reportWebVitals);
-      if (webVitals.getTTFB) webVitals.getTTFB(reportWebVitals);
-    }).catch(() => {
-      // Web Vitals non disponible - ignorer silencieusement
-    });
+    // Importer web-vitals en dev uniquement
+    if (!isProd) {
+      import('web-vitals')
+        .then((webVitals: any) => {
+          if (webVitals.getCLS) webVitals.getCLS(reportWebVitals);
+          if (webVitals.getFID) webVitals.getFID(reportWebVitals);
+          if (webVitals.getFCP) webVitals.getFCP(reportWebVitals);
+          if (webVitals.getLCP) webVitals.getLCP(reportWebVitals);
+          if (webVitals.getTTFB) webVitals.getTTFB(reportWebVitals);
+        })
+        .catch(() => {
+          // Web Vitals non disponible - ignorer silencieusement
+        });
+    }
 
     // Optimiser l'exécution JavaScript (simplifié)
     const optimizeJavaScript = () => {
@@ -99,6 +109,10 @@ export const useLighthouseOptimization = () => {
 
     // Observer les changements de layout
     const observeLayoutShifts = () => {
+      if (import.meta.env.PROD) {
+        // Ne pas observer/verboser en production
+        return;
+      }
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === 'layout-shift') {
@@ -113,7 +127,7 @@ export const useLighthouseOptimization = () => {
       try {
         observer.observe({ entryTypes: ['layout-shift'] });
       } catch (e) {
-        // Layout Shift API might not be available - silent fail
+        // Layout Shift API might not be disponible - silent fail
       }
     };
 
@@ -191,10 +205,25 @@ export const useLighthouseOptimization = () => {
 
     const runOptimizations = () => {
       optimizeLCP();
-      optimizeFID();
       optimizeCLS();
-      optimizeTTFB();
-      optimizeAccessibility();
+
+      if (isProd) {
+        const idle = (cb: () => void) =>
+          (typeof (window as any).requestIdleCallback === 'function'
+            ? (window as any).requestIdleCallback(cb)
+            : setTimeout(cb, 0));
+
+        // Reporter/optimiser non critiques en arrière-plan
+        idle(() => {
+          try { optimizeTTFB(); } catch {}
+          try { /* Accessibilité non critique en prod immédiat */ } catch {}
+        });
+      } else {
+        // En dev: tout exécuter pour le diagnostic
+        optimizeFID();
+        optimizeTTFB();
+        optimizeAccessibility();
+      }
 
       hasOptimized.current = true;
       // Optimisations appliquées silencieusement
@@ -268,3 +297,4 @@ export const useImageOptimization = () => {
 };
 
 export default useLighthouseOptimization;
+

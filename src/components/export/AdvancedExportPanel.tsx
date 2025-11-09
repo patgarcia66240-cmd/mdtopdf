@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   DocumentArrowDownIcon,
   Cog6ToothIcon,
@@ -316,11 +316,53 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
     border: `1px solid ${isDarkMode ? '#475569' : '#e2e8f0'}`
   });
 
+  // Accessibilité modale: focus trap + ESC + scroll lock
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    previouslyFocused.current = document.activeElement as HTMLElement;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    // Focus initial
+    setTimeout(() => dialogRef.current?.focus(), 0);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose?.();
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+        );
+        const list = Array.from(focusable).filter(el => (el as HTMLElement).offsetParent !== null);
+        if (list.length === 0) return;
+        const first = list[0];
+        const last = list[list.length - 1];
+        const active = document.activeElement as HTMLElement;
+        if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true);
+      document.body.style.overflow = prevOverflow;
+      previouslyFocused.current?.focus?.();
+    };
+  }, [onClose]);
+
   return (
     <div style={overlayStyle} onClick={onClose}>
-      <div style={containerStyle} onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} style={containerStyle} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="advanced-export-title" tabIndex={-1}>
         <div style={headerStyle}>
-          <h2 style={titleStyle}>
+          <h2 id="advanced-export-title" style={titleStyle}>
             <DocumentArrowDownIcon style={{ width: '24px', height: '24px' }} />
             Export Avancé
           </h2>
@@ -335,6 +377,7 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
               cursor: 'pointer',
               color: isDarkMode ? '#94a3b8' : '#64748b'
             }}
+            aria-label="Fermer la fenêtre d'export avancé"
           >
             <XMarkIcon style={{ width: '24px', height: '24px' }} />
           </button>

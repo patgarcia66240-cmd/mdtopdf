@@ -8,24 +8,6 @@ import FileImport from './modules/FileImport';
 const PDFPreview = lazy(() => import('./modules/PDFPreview'));
 const TemplateSelectorEnhanced = lazy(() => import('./templates/TemplateSelectorEnhanced'));
 const AdvancedExportPanel = lazy(() => import('./export/AdvancedExportPanel'));
-
-  // Préchargement prioritaire des composants critiques pour améliorer le Speed Index
-  if (typeof document !== 'undefined') {
-    // Préchargement immédiat du composant LCP (PDFPreview)
-    import('./modules/PDFPreview').catch(console.warn);
-
-    // Préchargement différé des composants fréquemment utilisés
-    setTimeout(() => {
-      import('./modules/MarkdownEditor').catch(console.warn);
-      import('./modules/Header').catch(console.warn);
-    }, 100);
-
-    // Préchargement des composants d'export (moins critiques)
-    setTimeout(() => {
-      import('./modules/PDFControlPanel').catch(console.warn);
-      import('./modules/ExportPanel').catch(console.warn);
-    }, 500);
-  }
 // import AccessibilityMonitor from './accessibility/AccessibilityMonitor';
 import SkipLink from './accessibility/SkipLink';
 import FocusManager from './accessibility/FocusManager';
@@ -516,11 +498,7 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
     lineCount: markdown.split('\n').length
   }), [markdown]);
 
-  // Fonction pour obtenir le titre optimisée avec useCallback
-  const getTitle = useCallback(() => {
-    return 'MD to PDF Pro';
-  }, []);
-
+  
   // Classes Tailwind optimisées
   const containerClasses = useMemo(() => (
     'min-h-screen bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-all duration-300 ease-in-out mx-auto px-5'
@@ -759,6 +737,7 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
                 onFileNameChange={setFileName}
                 onExportPDF={handleExportPDF}
                 onExportChange={handleExportFormatChange}
+                onOpenAdvancedExport={() => setShowAdvancedExport(true)}
                 previewTheme={previewTheme}
                 onThemeChange={setPreviewTheme}
                 previewZoom={previewZoom}

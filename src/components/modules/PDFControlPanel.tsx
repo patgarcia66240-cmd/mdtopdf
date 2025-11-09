@@ -11,6 +11,7 @@ interface PDFControlPanelProps {
   onFileNameChange: (name: string) => void;
   onExportPDF: () => void;
   onExportChange?: (format: string) => void;
+  onOpenAdvancedExport?: () => void;
   previewTheme: string;
   onThemeChange: (theme: string) => void;
   previewZoom: number;
@@ -27,6 +28,7 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
   onFileNameChange,
   onExportPDF,
   onExportChange,
+  onOpenAdvancedExport,
   previewTheme,
   onThemeChange,
   previewZoom,
@@ -123,6 +125,27 @@ const PDFControlPanel: React.FC<PDFControlPanelProps> = ({
         <Cog6ToothIcon style={{ width: '18px', height: '18px' }} aria-hidden="true" />
         Options PDF
       </h3>
+
+      {/* Bouton options avancées */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '-12px 0 12px 0' }}>
+        <button
+          type="button"
+          onClick={onOpenAdvancedExport}
+          aria-label="Ouvrir les options avancées d'export"
+          style={{
+            padding: '6px 10px',
+            borderRadius: '8px',
+            border: '1px solid ' + (isDarkMode ? '#475569' : '#d1d5db'),
+            background: isDarkMode ? '#0f172a' : '#ffffff',
+            color: isDarkMode ? '#e5e7eb' : '#1f2937',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer'
+          }}
+        >
+          Options avancées…
+        </button>
+      </div>
 
       {/* Nom du fichier */}
       <div style={sectionStyle}>

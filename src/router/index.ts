@@ -1,5 +1,6 @@
 import { createRouter, createRootRoute, createRoute, lazyRouteComponent } from '@tanstack/react-router'
 import App from '../App'
+import HomePage from '../pages/HomePage'
 
 // Création de la route racine
 const rootRoute = createRootRoute({
@@ -10,7 +11,8 @@ const rootRoute = createRootRoute({
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: lazyRouteComponent(() => import('../pages/HomePage'), 'default'),
+  // Eager render de la Home pour améliorer la LCP
+  component: HomePage,
 })
 
 // Création de la route du convertisseur

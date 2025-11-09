@@ -93,7 +93,7 @@ const generateHowToStructuredData = (props: HowToGuideProps) => {
 };
 
 const HowToGuide: React.FC<HowToGuideProps> = (props) => {
-  const { title, description, steps, totalTime, estimatedCost, image } = props;
+  const { title, description, steps, totalTime, estimatedCost } = props;
 
   // Générer les métadonnées SEO
   const seoTitle = `${title} - Guide Complet | MDtoPDF Pro`;

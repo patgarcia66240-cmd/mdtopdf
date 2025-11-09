@@ -6,67 +6,13 @@
     <title>Convertisseur Markdown vers PDF</title>
     <meta name="description" content="Convertissez vos fichiers Markdown en PDF avec un rendu de haute qualité" />
 
-    <!-- Optimized font loading for better LCP/FCP -->
+    <!-- Font loading simple (une seule stratégie) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" crossorigin>
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet">
 
-    <!-- Critical CSS pour éviter le FOIT (Flash of Invisible Text) -->
-    <style>
-      /* Prévention du FOIT pour Inter */
-      @font-face {
-        font-family: 'Inter';
-        font-style: normal;
-        font-weight: 400;
-        font-display: swap;
-        src: url('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2') format('woff2');
-      }
-      @font-face {
-        font-family: 'Inter';
-        font-style: normal;
-        font-weight: 500;
-        font-display: swap;
-        src: url('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hiJ-Ek-_EeA.woff2') format('woff2');
-      }
-      @font-face {
-        font-family: 'Inter';
-        font-style: normal;
-        font-weight: 600;
-        font-display: swap;
-        src: url('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hiJ-Ek-_EeA.woff2') format('woff2');
-      }
-    </style>
-
-    <!-- Preload du bundle JavaScript principal -->
-    <link rel="modulepreload" href="/src/index.tsx" />
-
-    <!-- Preload du CSS principal pour éviter le flash -->
-    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
-
-    <!-- Preload des CSS des composants critiques pour LCP -->
-    <link rel="preload" href="/src/components/home/HeroSection.module.css" as="style">
-    <link rel="preload" href="/src/components/home/FeaturesSection.module.css" as="style">
-    <link rel="preload" href="/src/components/home/TestimonialsSection.module.css" as="style">
-    <link rel="preload" href="/src/components/home/CTASection.module.css" as="style">
-
-    <!-- Resource Hints optimisés pour LCP -->
-    <link rel="modulepreload" href="/src/App.tsx" />
-    <link rel="modulepreload" href="/src/router/index.ts" />
-    <link rel="modulepreload" href="/src/pages/HomePage.tsx" />
-
-    <!-- Preload des composants critiques de la page d'accueil -->
-    <link rel="modulepreload" href="/src/components/home/HeroSection.tsx" />
-    <link rel="modulepreload" href="/src/components/home/FeaturesSection.tsx" />
-    <link rel="modulepreload" href="/src/components/home/TestimonialsSection.tsx" />
-    <link rel="modulepreload" href="/src/components/home/CTASection.tsx" />
-
-    <!-- Preload des skeletons pour éviter les délais -->
-    <link rel="modulepreload" href="/src/components/home/HeroSectionSkeleton.tsx" />
-    <link rel="modulepreload" href="/src/components/home/FeaturesSectionSkeleton.tsx" />
-    <link rel="modulepreload" href="/src/components/home/TestimonialsSectionSkeleton.tsx" />
-    <link rel="modulepreload" href="/src/components/home/CTASectionSkeleton.tsx" />
+    <!-- CSS principal -->
+    <link rel="stylesheet" href="/src/index.css">
 
     <!-- Critical CSS inline optimisé pour FCP -->
     <style>

@@ -1,12 +1,11 @@
 import React, { Suspense } from 'react';
 import Helmet from '../components/seo/Helmet';
-import HeroSectionSkeleton from '../components/home/HeroSectionSkeleton';
 import FeaturesSectionSkeleton from '../components/home/FeaturesSectionSkeleton';
 import TestimonialsSectionSkeleton from '../components/home/TestimonialsSectionSkeleton';
 import CTASectionSkeleton from '../components/home/CTASectionSkeleton';
 
-// Lazy loading des composants
-const HeroSection = React.lazy(() => import('../components/home/HeroSection'));
+// Eager load de la Hero (améliore LCP)
+import HeroSection from '../components/home/HeroSection';
 const FeaturesSection = React.lazy(() => import('../components/home/FeaturesSection'));
 const TestimonialsSection = React.lazy(() => import('../components/home/TestimonialsSection'));
 const CTASection = React.lazy(() => import('../components/home/CTASection'));
@@ -55,9 +54,8 @@ const HomePage: React.FC = () => {
         }}
       />
 
-      <Suspense fallback={<HeroSectionSkeleton />}>
-        <HeroSection />
-      </Suspense>
+      {/* Hero affichée immédiatement pour réduire la LCP */}
+      <HeroSection />
 
       <Suspense fallback={<FeaturesSectionSkeleton />}>
         <FeaturesSection />

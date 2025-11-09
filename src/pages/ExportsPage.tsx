@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import AdvancedExportPanel from '../components/export/AdvancedExportPanel';
 
 export const ExportsPage: React.FC = () => {
+  const [open, setOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => setIsDarkMode(mq ? mq.matches : false);
+    apply();
+    mq && mq.addEventListener && mq.addEventListener('change', apply);
+    return () => { mq && mq.removeEventListener && mq.removeEventListener('change', apply); };
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="mb-8">
@@ -37,7 +49,25 @@ export const ExportsPage: React.FC = () => {
 
       <main>
         <h2 className="sr-only">Options d'export avancées</h2>
-        <AdvancedExportPanel />
+        <div className="mb-6">
+          <button
+            onClick={() => setOpen(true)}
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Ouvrir l'export avancé
+          </button>
+        </div>
+
+        <div ref={previewRef} aria-hidden="true" />
+
+        {open && (
+          <AdvancedExportPanel
+            markdown={''}
+            elementRef={previewRef as React.RefObject<HTMLElement>}
+            isDarkMode={isDarkMode}
+            onClose={() => setOpen(false)}
+          />
+        )}
       </main>
     </div>
   );

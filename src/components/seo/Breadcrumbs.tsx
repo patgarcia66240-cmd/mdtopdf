@@ -35,10 +35,10 @@ const generateBreadcrumbStructuredData = (items: BreadcrumbItem[], baseUrl: stri
 };
 
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
-  const location = useLocation();
 
   // Générer les données structurées
-  const structuredData = generateBreadcrumbStructuredData(items);
+  const structuredData = React.useMemo(() => generateBreadcrumbStructuredData(items), [items]);
+  const structuredJson = React.useMemo(() => JSON.stringify(structuredData, null, 2), [structuredData]);
 
   // Injecter les données structurées dans le head
   React.useEffect(() => {
@@ -52,14 +52,10 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
       document.head.appendChild(scriptElement);
     }
 
-    scriptElement.textContent = JSON.stringify(structuredData, null, 2);
-
-    return () => {
-      if (scriptElement) {
-        document.head.removeChild(scriptElement);
-      }
-    };
-  }, [structuredData]);
+    if (scriptElement.textContent !== structuredJson) {
+      scriptElement.textContent = structuredJson;
+    }
+  }, [structuredJson]);
 
   if (items.length === 0) return null;
 
