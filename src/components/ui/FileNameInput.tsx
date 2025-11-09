@@ -106,7 +106,7 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
 
   return (
     <div>
-      <label className={`
+      <label htmlFor="filename-input" className={`
         block mb-3 text-base font-semibold
         ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}
       `}>
@@ -114,12 +114,18 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
       </label>
       <div className="flex flex-row gap-1.5 items-center mb-3">
         <input
+          id="filename-input"
           type="text"
           value={value}
           onChange={handleInputChange}
           placeholder={placeholder}
+          aria-label="Nom du fichier d'export"
+          aria-describedby="filename-help"
           className={getInputClasses()}
         />
+        <div id="filename-help" className="sr-only">
+          Entrez le nom souhaité pour votre fichier exporté. L'extension sera ajoutée automatiquement selon le format choisi.
+        </div>
 
         <div className="relative" id="format-dropdown">
           <button
@@ -161,12 +167,17 @@ const FileNameInput: React.FC<FileNameInputProps> = ({
           onClick={handleButtonClick}
           className={getExportButtonClasses()}
           type="button"
+          aria-label={`${buttonText} en ${selectedFormat.toUpperCase()}`}
+          aria-describedby="export-button-help"
         >
           {showIcon && (
-            <DocumentArrowDownIcon className="w-4 h-4" />
+            <DocumentArrowDownIcon className="w-4 h-4" aria-hidden="true" />
           )}
           {buttonText}
         </button>
+        <div id="export-button-help" className="sr-only">
+          Cliquez pour exporter le document dans le format sélectionné avec le nom de fichier spécifié.
+        </div>
       </div>
     </div>
   );

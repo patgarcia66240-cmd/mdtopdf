@@ -1,0 +1,98 @@
+/* Skeleton pour FeaturesSection */
+
+.featuresSection {
+  padding: 4rem 2rem;
+  background-color: #f8fafc;
+}
+
+.featuresContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.featuresTitleSkeleton {
+  height: 2.5rem;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+  margin-bottom: 3rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.featureCardSkeleton {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.featureIconSkeleton {
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.featureTitleSkeleton {
+  height: 1.5rem;
+  width: 80%;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.featureDescriptionSkeleton {
+  height: 1rem;
+  width: 95%;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.featureDescriptionSkeleton:nth-child(3) {
+  width: 85%;
+}
+
+.featureDescriptionSkeleton:nth-child(4) {
+  width: 90%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .featuresSection {
+    padding: 2rem 1rem;
+  }
+
+  .featuresTitleSkeleton {
+    height: 2rem;
+  }
+}

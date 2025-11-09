@@ -196,8 +196,8 @@ const TemplateSelectorEnhanced: React.FC<TemplateSelectorEnhancedProps> = ({
     }
 
     return `${baseClasses} ${isDarkMode
-      ? 'bg-gray-700 text-gray-100 border-gray-600 border-b-transparent hover:bg-gray-600 hover:border-b-gray-500'
-      : 'bg-gray-50 text-gray-700 border-gray-300 border-b-transparent hover:bg-gray-200 hover:border-b-gray-400'
+      ? 'bg-gray-800 text-gray-100 border-gray-600 border-b-transparent hover:bg-gray-700 hover:border-b-gray-500'
+      : 'bg-white text-gray-900 border-gray-300 border-b-transparent hover:bg-gray-50 hover:border-b-gray-400'
     }`;
   };
 

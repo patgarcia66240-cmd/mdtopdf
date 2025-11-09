@@ -1,0 +1,64 @@
+/* Skeleton pour CTASection */
+
+.ctaSection {
+  background-color: #1f2937;
+  color: white;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.ctaContainer {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.ctaTitleSkeleton {
+  height: 2.5rem;
+  background: linear-gradient(90deg, #4b5563 0%, #6b7280 50%, #4b5563 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ctaDescriptionSkeleton {
+  height: 1.5rem;
+  background: linear-gradient(90deg, #4b5563 0%, #6b7280 50%, #4b5563 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+  margin-bottom: 2rem;
+}
+
+.ctaButtonSkeleton {
+  height: 3rem;
+  width: 200px;
+  background: linear-gradient(90deg, #4b5563 0%, #6b7280 50%, #4b5563 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+  margin: 0 auto;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .ctaSection {
+    padding: 2rem 1rem;
+  }
+
+  .ctaTitleSkeleton {
+    height: 2rem;
+  }
+
+  .ctaDescriptionSkeleton {
+    height: 1.25rem;
+  }
+}

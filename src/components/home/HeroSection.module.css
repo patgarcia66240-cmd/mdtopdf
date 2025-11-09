@@ -1,0 +1,102 @@
+/* Section Hero - Composant réutilisable */
+
+.heroSection {
+  background: linear-gradient(80deg, #1f2937 0%, #374151 100%);
+  color: white;
+  padding: 4rem 2rem;
+  text-align: center;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+}
+
+.heroContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.heroTitle {
+  font-size: 3rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.heroTitle span {
+  color: #fbbf24;
+}
+
+.heroDescription {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+}
+
+.heroButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.heroButtonPrimary,
+.heroButtonSecondary {
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateZ(0);
+}
+
+.heroButtonPrimary {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  border: 1px solid #6b7280;
+  color: white;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.heroButtonPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);
+}
+
+.heroButtonSecondary {
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .heroSection {
+    padding: 2rem 1rem;
+    min-height: 300px;
+  }
+
+  .heroTitle {
+    font-size: 2rem;
+  }
+
+  .heroDescription {
+    font-size: 1.1rem;
+  }
+
+  .heroButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .heroButtonPrimary,
+  .heroButtonSecondary {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+  }
+}

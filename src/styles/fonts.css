@@ -1,0 +1,47 @@
+/* Font loading optimisation - Utilisation des polices système pour éviter les erreurs */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Inter');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('Inter Medium');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Inter SemiBold');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Inter Bold');
+}
+
+/* Police système optimisée avec Inter comme fallback */
+.font-inter {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif, 'Inter', system-ui;
+}
+
+/* Suppression des états de chargement problématiques */
+.fonts-loading .font-inter,
+.fonts-loaded .font-inter {
+  visibility: visible;
+}
+
+/* Suppression du preload incorrect qui causait des erreurs */

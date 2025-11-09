@@ -114,7 +114,7 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
       return;
     }
 
-    if (!elementRef.current && selectedFormats.some(f => ['png', 'jpg'].includes(f))) {
+    if (!elementRef?.current && selectedFormats.some(f => ['png', 'jpg'].includes(f))) {
       alert('L\'export d\'images nécessite un aperçu disponible');
       return;
     }
@@ -145,7 +145,7 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
         } : undefined
       }));
 
-      await exportToMultipleFormats(markdown, elementRef.current, exportOptions);
+      await exportToMultipleFormats(markdown, elementRef?.current || null, exportOptions);
     } catch (error) {
       console.error('Erreur lors de l\'export:', error);
       alert('Une erreur est survenue lors de l\'export. Veuillez réessayer.');
@@ -325,16 +325,19 @@ const AdvancedExportPanel: React.FC<AdvancedExportPanelProps> = ({
             Export Avancé
           </h2>
           <button
-          onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: isDarkMode ? '#94a3b8' : '#64748b'
-          }}
-        >
-          <XMarkIcon style={{ width: '24px', height: '24px' }} />
-        </button>
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose?.();
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: isDarkMode ? '#94a3b8' : '#64748b'
+            }}
+          >
+            <XMarkIcon style={{ width: '24px', height: '24px' }} />
+          </button>
       </div>
 
       <div style={contentStyle}>

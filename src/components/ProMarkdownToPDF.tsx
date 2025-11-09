@@ -1,17 +1,45 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import MarkdownEditor from './modules/MarkdownEditor';
 import PDFControlPanel from './modules/PDFControlPanel';
-import PDFPreview from './modules/PDFPreview';
-import TemplateSelectorEnhanced from './templates/TemplateSelectorEnhanced';
 import ExportPanel from './modules/ExportPanel';
-import AdvancedExportPanel from './export/AdvancedExportPanel';
 import FileImport from './modules/FileImport';
-import Header from './modules/Header';
+
+// Lazy loading des composants lourds avec priorité pour LCP
+const PDFPreview = lazy(() => import('./modules/PDFPreview'));
+const TemplateSelectorEnhanced = lazy(() => import('./templates/TemplateSelectorEnhanced'));
+const AdvancedExportPanel = lazy(() => import('./export/AdvancedExportPanel'));
+
+  // Préchargement prioritaire des composants critiques pour améliorer le Speed Index
+  if (typeof document !== 'undefined') {
+    // Préchargement immédiat du composant LCP (PDFPreview)
+    import('./modules/PDFPreview').catch(console.warn);
+
+    // Préchargement différé des composants fréquemment utilisés
+    setTimeout(() => {
+      import('./modules/MarkdownEditor').catch(console.warn);
+      import('./modules/Header').catch(console.warn);
+    }, 100);
+
+    // Préchargement des composants d'export (moins critiques)
+    setTimeout(() => {
+      import('./modules/PDFControlPanel').catch(console.warn);
+      import('./modules/ExportPanel').catch(console.warn);
+    }, 500);
+  }
 // import AccessibilityMonitor from './accessibility/AccessibilityMonitor';
 import SkipLink from './accessibility/SkipLink';
 import FocusManager from './accessibility/FocusManager';
+import { TemplateSelectorSkeleton, AdvancedExportSkeleton, PDFPreviewSkeleton } from './loading/LoadingSkeletons';
 import { usePDFExport } from '../hooks/usePDFExport';
 import { useTemplates } from '../hooks/useTemplates';
+import { useMDtoPDFPreloading } from '../hooks/usePreloadComponents';
+import { useKeyboardOptimization, useEditorKeyboardShortcuts, useFocusManagement } from '../hooks/useKeyboardOptimization';
+import { usePerformanceMonitor, useLatencyTracker } from '../hooks/usePerformanceMonitor';
+import { useLighthouseOptimization, useImageOptimization } from '../hooks/useLighthouseOptimization';
+
+import KeyboardShortcutsHelp from './ui/KeyboardShortcutsHelp';
+import PerformanceMonitor from './ui/PerformanceMonitor';
+import Helmet from './seo/Helmet';
 import { PDFOptions } from '../types/app';
 
 const ProMarkdownToPDFRefactored: React.FC = () => {
@@ -19,16 +47,42 @@ const ProMarkdownToPDFRefactored: React.FC = () => {
   const { selectTemplate } = useTemplates();
   const { exportToPDF, exportToHTML, exportToMarkdown, exportToDOCX, isExporting } = usePDFExport();
 
+  // Monitoring des performances
+  const {
+    useComponentTracking,
+    getPerformanceStats,
+    isPerformanceIssue,
+    clearMetrics
+  } = usePerformanceMonitor({
+    enableRenderTimeTracking: true,
+    enableMemoryTracking: true,
+    alertThreshold: 70 // alerte si rendu > 70ms
+  });
+
+  // Tracking de latence
+  const { startTracking, endTracking, latencies } = useLatencyTracker();
+
+  // Suivi des performances du composant principal
+  useComponentTracking('ProMarkdownToPDF');
+
+  // Optimisations Lighthouse
+  useLighthouseOptimization();
+  useImageOptimization();
+
   // États
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isEditorLoading, setIsEditorLoading] = useState(false);
 
-  // Tempo automatique de 1 seconde au montage
+  // État de chargement optimisé - pas de délai artificiel
   React.useEffect(() => {
+    // Démarrer le chargement immédiatement
     setIsEditorLoading(true);
-    const timer = setTimeout(() => setIsEditorLoading(false), 1000);
+
+    // Simuler un chargement minimal pour éviter le flash
+    const timer = setTimeout(() => setIsEditorLoading(false), 100);
     return () => clearTimeout(timer);
   }, []);
+
   const [markdown, setMarkdown] = useState(`# 📚 Document Complet sur 4 Pages 📄
 
 ## Page 1: Introduction et Vue d'Ensemble 🎯
@@ -385,6 +439,62 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
   const [totalPages, setTotalPages] = useState(1);
   const [viewMode, setViewMode] = useState<'single' | 'all'>('single');
   const [showAdvancedExport, setShowAdvancedExport] = useState(false);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+
+  // Hook de préchargement des composants (après déclaration des états)
+  useMDtoPDFPreloading({
+    showTemplates,
+    showAdvancedExport,
+    isDarkMode
+  });
+
+  // Optimisations clavier
+  const appContainerRef = useRef<HTMLDivElement>(null);
+  const { focusFirst, focusLast, focusElement } = useFocusManagement(appContainerRef as React.RefObject<HTMLElement>);
+
+  // Raccourcis clavier spécifiques à l'éditeur
+  useEditorKeyboardShortcuts({
+    onSave: () => handleExportPDF(),
+    onExport: () => handleExportPDF(),
+    onTogglePreview: () => setShowPreview(!showPreview),
+    onUndo: () => console.log('Undo action'),
+    onRedo: () => console.log('Redo action')
+  });
+
+  // Raccourcis clavier globaux
+  const { registerShortcut } = useKeyboardOptimization();
+
+  useEffect(() => {
+    // Raccourcis de navigation
+    const cleanupShortcuts = [
+      registerShortcut('Alt+1', () => handleTabChange('editor')),
+      registerShortcut('Alt+2', () => handleTabChange('import')),
+      registerShortcut('Alt+3', () => handleTabChange('templates')),
+      registerShortcut('Alt+4', () => handleTabChange('export')),
+
+      // Raccourcis d'action
+      registerShortcut('Ctrl+Shift+S', () => setIsDarkMode(!isDarkMode)),
+      registerShortcut('Ctrl+Shift+E', () => setShowAdvancedExport(true)),
+      registerShortcut('Escape', () => {
+        setShowAdvancedExport(false);
+        setShowPreview(false);
+      }),
+
+      // Navigation focus
+      registerShortcut('F6', () => focusElement('#editor-panel')),
+      registerShortcut('F7', () => focusElement('#preview-panel')),
+      registerShortcut('F1', () => focusFirst()),
+      registerShortcut('F12', () => focusLast()),
+
+      // Aide clavier
+      registerShortcut('?', () => setShowKeyboardHelp(true)),
+      registerShortcut('F10', () => setShowKeyboardHelp(true))
+    ];
+
+    return () => {
+      cleanupShortcuts.forEach(cleanup => cleanup());
+    };
+  }, [registerShortcut, focusElement, focusFirst, focusLast]);
 
   const [pdfOptions, setPdfOptions] = useState<PDFOptions>({
     format: 'a4',
@@ -399,36 +509,44 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
     fontFamily: 'Inter'
   });
 
-  // Calcul des statistiques
-  const stats = {
+  // Calcul des statistiques optimisé avec useMemo
+  const stats = useMemo(() => ({
     wordCount: markdown.split(/\s+/).filter(word => word.length > 0).length,
     charCount: markdown.length,
     lineCount: markdown.split('\n').length
-  };
+  }), [markdown]);
 
-  // Fonction pour obtenir le titre
-  const getTitle = () => {
+  // Fonction pour obtenir le titre optimisée avec useCallback
+  const getTitle = useCallback(() => {
     return 'MD to PDF Pro';
-  };
+  }, []);
 
-  // Styles
-  const containerStyle = {
-    minHeight: '100vh',
-    backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc',
-    color: isDarkMode ? '#f1f5f9' : '#1e293b',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    transition: 'all 0.3s ease',
-    margin: '0 auto', // Centre le conteneur
-    padding: '0 20px' // Ajoute des marges latérales pour le centrage
-  };
+  // Classes Tailwind optimisées
+  const containerClasses = useMemo(() => (
+    'min-h-screen bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-all duration-300 ease-in-out mx-auto px-5'
+  ), []);
 
 
+
+  // Hook pour détecter la taille d'écran
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const mainContentStyle = {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '12px',
-    padding: '12px',
+    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+    gap: isMobile ? '8px' : '12px',
+    padding: isMobile ? '8px' : '12px',
     margin: '0 auto',
     width: '100%',
     boxSizing: 'border-box' as const
@@ -448,9 +566,14 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
     tabIndex: 0
   };
 
-  // Handlers
-  const handleExportPDF = async () => {
-    if (!markdownRef.current) return;
+  // Handlers optimisés avec tracking de latence
+  const handleExportPDF = useCallback(async () => {
+    startTracking('export_pdf');
+
+    if (!markdownRef.current) {
+      endTracking('export_pdf');
+      return;
+    }
 
     try {
       switch (exportFormat) {
@@ -468,8 +591,10 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
       console.error('Export failed:', error);
       // TODO: Show user-facing error notification
       alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      endTracking('export_pdf');
     }
-  };
+  }, [exportFormat, fileName, pdfOptions, exportToPDF, exportToHTML, exportToMarkdown, startTracking, endTracking]);
   const handleExportFormatChange = (format: string) => {
     setExportFormat(format);
   };
@@ -549,8 +674,38 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
 
 
   return (
-    <FocusManager isDarkMode={isDarkMode}>
-      <div style={containerStyle} role="application" aria-label="MDtoPDF Pro - Convertisseur Markdown vers PDF">
+    <>
+      <Helmet
+        title="Convertisseur Markdown vers PDF Pro - Éditeur en ligne gratuit"
+        description="Convertissez vos fichiers Markdown en PDF professionnel avec notre éditeur en ligne. Prévisualisation temps réel, templates personnalisables, export multi-formats (PDF, HTML, DOCX). Interface moderne et accessible."
+        keywords="convertisseur markdown pdf, éditeur markdown, export pdf, markdown to pdf, générateur pdf, éditeur en ligne, convertisseur gratuit"
+        canonical="https://mdtopdf-pro.app/converter"
+        ogType="website"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          "name": "MDtoPDF Pro - Convertisseur",
+          "description": "Éditeur Markdown professionnel avec conversion PDF en temps réel",
+          "url": "https://mdtopdf-pro.app/converter",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web Browser",
+          "featureList": [
+            "Éditeur Markdown en temps réel",
+            "Prévisualisation PDF instantanée",
+            "Export multi-formats",
+            "Templates personnalisables",
+            "Interface accessible"
+          ]
+        }}
+      />
+      <FocusManager isDarkMode={isDarkMode}>
+      <div
+        ref={appContainerRef}
+        className={containerClasses}
+        aria-label="MDtoPDF Pro - Convertisseur Markdown vers PDF"
+        aria-busy={isEditorLoading}
+        tabIndex={-1}
+      >
         {/* Skip Links pour accessibilité */}
         <SkipLink targetId="editor-panel">
           Passer à l'édition
@@ -559,106 +714,140 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
           Passer à l'aperçu
         </SkipLink>
 
-        {/* Header */}
-        <Header
-        title={getTitle()}
-        showImport={showImport}
-        showTemplates={showTemplates}
-        showExport={showExport}
-        isDarkMode={isDarkMode}
-        isLoading={isEditorLoading}
-        onTabChange={handleTabChange}
-        onThemeToggle={() => setIsDarkMode(!isDarkMode)}
-        onAdvancedExport={() => setShowAdvancedExport(true)}
-      />
-
-      {/* Carousel de templates compact au-dessus de l'éditeur */}
+      {/* Section de templates avec landmark sémantique */}
       {showTemplates && (
-        <div style={{
-          marginBottom: '16px',
-          padding: '0 4px'
-        }}>
-          <TemplateSelectorEnhanced
-            isDarkMode={isDarkMode}
-            onTemplateSelect={(template) => {
-              selectTemplate(template);
-              handleApplyTemplate('', template);
-            }}
-          />
-        </div>
+        <section
+          style={{
+            marginBottom: '16px',
+            padding: '0 4px'
+          }}
+          aria-label="Sélection de templates"
+          role="region"
+        >
+          <Suspense fallback={<TemplateSelectorSkeleton isDarkMode={isDarkMode} />}>
+            <TemplateSelectorEnhanced
+              isDarkMode={isDarkMode}
+              onTemplateSelect={(template) => {
+                selectTemplate(template);
+                handleApplyTemplate('', template);
+              }}
+            />
+          </Suspense>
+        </section>
       )}
 
-      {/* Main Content */}
-      <main style={mainContentStyle} role="main">
-        <div style={leftPanelStyle} id="editor-panel" role="region" aria-label="Panneau d'édition et de configuration">
+      {/* Main Content avec structure sémantique améliorée */}
+      <main
+        style={mainContentStyle}
+        role="main"
+        aria-label="Éditeur Markdown et aperçu PDF"
+      >
+        {/* Panneau de gauche - Édition et configuration */}
+        <section
+          style={leftPanelStyle}
+          id="editor-panel"
+          role="region"
+          aria-label="Panneau d'édition et de configuration"
+        >
+          {/* Panneau de configuration PDF */}
           {showOptions && (
-            <PDFControlPanel
-              pdfOptions={pdfOptions}
-              onOptionsChange={setPdfOptions}
-              fileName={fileName}
-              onFileNameChange={setFileName}
-              onExportPDF={handleExportPDF}
-              onExportChange={handleExportFormatChange}
-              previewTheme={previewTheme}
-              onThemeChange={setPreviewTheme}
-              previewZoom={previewZoom}
-              onZoomChange={setPreviewZoom}
-              isDarkMode={isDarkMode}
-              isLoading={isEditorLoading}
-              exportFormat={exportFormat}
-            />
+            <div role="complementary" aria-label="Options de configuration PDF">
+              <PDFControlPanel
+                pdfOptions={pdfOptions}
+                onOptionsChange={setPdfOptions}
+                fileName={fileName}
+                onFileNameChange={setFileName}
+                onExportPDF={handleExportPDF}
+                onExportChange={handleExportFormatChange}
+                previewTheme={previewTheme}
+                onThemeChange={setPreviewTheme}
+                previewZoom={previewZoom}
+                onZoomChange={setPreviewZoom}
+                isDarkMode={isDarkMode}
+                isLoading={isEditorLoading}
+                exportFormat={exportFormat}
+              />
+            </div>
           )}
+
+          {/* Panneau d'importation de fichiers */}
           {showImport && (
-            <FileImport
-              onFileImport={handleFileImport}
-              isDarkMode={isDarkMode}
-              isLoading={isEditorLoading}
-            />
+            <div role="complementary" aria-label="Importation de fichiers">
+              <FileImport
+                onFileImport={handleFileImport}
+                isDarkMode={isDarkMode}
+                isLoading={isEditorLoading}
+              />
+            </div>
           )}
 
-          <MarkdownEditor
-            markdown={markdown}
-            onChange={setMarkdown}
-            showPreview={false}
-            onTogglePreview={() => setShowPreview(!showPreview)}
-            isDarkMode={isDarkMode}
-            isLoading={isEditorLoading}
-          />
-          {showExport && (
-            <ExportPanel
-              onExportPDF={handleExportPDF}
-              onExportHTML={handleExportHTML}
-              onExportMD={handleExportMD}
-              onExportDOCX={handleExportDOCX}
-              wordCount={stats.wordCount}
-              charCount={stats.charCount}
-              lineCount={stats.lineCount}
-              isDarkMode={isDarkMode}
-              isExporting={isExporting}
-            />
-          )}
-        </div>
-
-        <div style={rightPanelStyle} id="preview-panel" role="region" aria-label="Panneau d'aperçu PDF">
-          {/* Aperçu PDF */}
-          <div style={{ position: 'relative' }}>
-              <PDFPreview
-              ref={markdownRef}
+          {/* Éditeur Markdown principal */}
+          <div
+            aria-label="Éditeur de texte Markdown"
+            aria-describedby="editor-description"
+            role="application"
+            aria-roledescription="éditeur de texte enrichi"
+          >
+            <div id="editor-description" className="sr-only">
+              Éditeur Markdown avec support de la syntaxe complète. Utilisez les raccourcis clavier pour une édition rapide.
+            </div>
+            <MarkdownEditor
               markdown={markdown}
-              previewTheme={previewTheme}
-              previewZoom={previewZoom}
-              onZoomChange={setPreviewZoom}
+              onChange={setMarkdown}
+              showPreview={false}
+              onTogglePreview={() => setShowPreview(!showPreview)}
               isDarkMode={isDarkMode}
               isLoading={isEditorLoading}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              totalPages={totalPages}
-              setTotalPages={setTotalPages}
-              viewMode={viewMode}
-              onViewModeChange={handleViewModeChange}
             />
           </div>
-        </div>
+
+          {/* Panneau d'exportation */}
+          {showExport && (
+            <div role="complementary" aria-label="Options d'exportation">
+              <ExportPanel
+                onExportPDF={handleExportPDF}
+                onExportHTML={handleExportHTML}
+                onExportMD={handleExportMD}
+                onExportDOCX={handleExportDOCX}
+                wordCount={stats.wordCount}
+                charCount={stats.charCount}
+                lineCount={stats.lineCount}
+                isDarkMode={isDarkMode}
+                isExporting={isExporting}
+              />
+            </div>
+          )}
+        </section>
+
+        {/* Panneau de droite - Aperçu PDF */}
+        <section
+          style={rightPanelStyle}
+          id="preview-panel"
+          role="region"
+          aria-label="Panneau d'aperçu PDF"
+          aria-live="polite"
+          aria-atomic="false"
+        >
+          <div aria-label="Aperçu du document PDF" style={{ position: 'relative' }}>
+            <Suspense fallback={<PDFPreviewSkeleton isDarkMode={isDarkMode} />}>
+              <PDFPreview
+                ref={markdownRef}
+                markdown={markdown}
+                previewTheme={previewTheme}
+                previewZoom={previewZoom}
+                onZoomChange={setPreviewZoom}
+                isDarkMode={isDarkMode}
+                isLoading={isEditorLoading}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalPages={totalPages}
+                setTotalPages={setTotalPages}
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
+              />
+            </Suspense>
+          </div>
+        </section>
       </main>
 
       {/* Moniteur d'accessibilité - Temporairement désactivé */}
@@ -670,17 +859,41 @@ Dernière ligne du document ! Mission accomplie ! 🚀🎊🎯`);
         }}
       /> */}
 
-      {/* Panneau d'export avancé */}
+      {/* Panneau d'export avancé avec landmark sémantique */}
       {showAdvancedExport && (
-        <AdvancedExportPanel
-          markdown={markdown}
-          elementRef={markdownRef as React.RefObject<HTMLElement>}
+        <div role="dialog" aria-modal="true" aria-label="Options d'export avancées">
+          <Suspense fallback={<AdvancedExportSkeleton isDarkMode={isDarkMode} />}>
+            <AdvancedExportPanel
+              markdown={markdown}
+              elementRef={markdownRef as React.RefObject<HTMLElement>}
+              isDarkMode={isDarkMode}
+              onClose={() => setShowAdvancedExport(false)}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {/* Aide clavier */}
+      {showKeyboardHelp && (
+        <KeyboardShortcutsHelp
           isDarkMode={isDarkMode}
-          onClose={() => setShowAdvancedExport(false)}
+          onClose={() => setShowKeyboardHelp(false)}
         />
       )}
+
+      {/* Moniteur de performance (uniquement en développement) */}
+      <div role="status" aria-live="polite" aria-label="Informations de performance">
+        <PerformanceMonitor
+          performanceStats={getPerformanceStats()}
+          latencies={latencies}
+          isPerformanceIssue={isPerformanceIssue}
+          isDarkMode={isDarkMode}
+          onClearMetrics={clearMetrics}
+        />
+      </div>
       </div>
     </FocusManager>
+    </>
   );
 };
 

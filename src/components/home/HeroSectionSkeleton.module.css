@@ -1,0 +1,91 @@
+/* Skeleton pour HeroSection - Animation de chargement */
+
+.heroSection {
+  background: linear-gradient(80deg, #1f2937 0%, #374151 100%);
+  color: white;
+  padding: 4rem 2rem;
+  text-align: center;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+}
+
+.heroContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.heroTitleSkeleton {
+  height: 3rem;
+  background: linear-gradient(90deg, #4b5563 0%, #6b7280 50%, #4b5563 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.heroDescriptionSkeleton {
+  height: 1.5rem;
+  background: linear-gradient(90deg, #4b5563 0%, #6b7280 50%, #4b5563 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+  margin-bottom: 2rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.heroButtonsSkeleton {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.heroButtonSkeleton {
+  height: 3rem;
+  width: 180px;
+  background: linear-gradient(90deg, #4b5563 0%, #6b7280 50%, #4b5563 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .heroSection {
+    padding: 2rem 1rem;
+    min-height: 300px;
+  }
+
+  .heroTitleSkeleton {
+    height: 2rem;
+  }
+
+  .heroDescriptionSkeleton {
+    height: 1.25rem;
+  }
+
+  .heroButtonsSkeleton {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .heroButtonSkeleton {
+    width: 100%;
+    max-width: 280px;
+  }
+}

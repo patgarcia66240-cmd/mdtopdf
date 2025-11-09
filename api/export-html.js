@@ -314,7 +314,7 @@ export default async function handler(req, res) {
     const safeFileName = encodeURIComponent(fileName);
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="${safeFileName}.html"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName.replace(/"/g, '\\"')}.html"`);
     res.status(200).send(finalHTML);
   } catch (err) {
     console.error("Erreur export HTML:", err);

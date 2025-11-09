@@ -24,6 +24,15 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
   isDarkMode,
   isExporting
 }) => {
+  // État pour détecter mobile
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const panelStyle = {
     backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     padding: '24px',
@@ -40,8 +49,8 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
 
   const exportGridStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '12px',
+    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: isMobile ? '8px' : '12px',
     marginBottom: '24px'
   };
 
@@ -142,47 +151,51 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
   ];
 
   return (
-    <div style={panelStyle}>
-      <h3 style={titleStyle}>Export Multi-Formats</h3>
+    <div style={panelStyle} role="region" aria-labelledby="export-title">
+      <h3 id="export-title" style={titleStyle}>Export Multi-Formats</h3>
 
-      <div style={exportGridStyle}>
+      <div style={exportGridStyle} role="group" aria-label="Options d'export disponibles">
         {exportOptions.map((option, index) => (
           <button
             key={index}
             onClick={option.onClick}
             disabled={isExporting}
+            aria-label={isExporting ? 'Exportation en cours' : `Exporter en ${option.label.toLowerCase()}`}
+            aria-describedby={isExporting ? 'export-status' : undefined}
             style={buttonStyle(option.gradient, isExporting)}
             onMouseEnter={isExporting ? undefined : handleButtonHover}
             onMouseLeave={isExporting ? undefined : handleButtonLeave}
           >
-            {option.icon}
-            {isExporting ? 'Exportation en cours...' : option.label}
+            <span aria-hidden="true">{option.icon}</span>
+            <span id={isExporting ? 'export-status' : undefined}>
+              {isExporting ? 'Exportation en cours...' : option.label}
+            </span>
           </button>
         ))}
       </div>
 
-      <div style={statsContainerStyle}>
-        <h4 style={statsTitleStyle}>
-          <ChartBarIcon style={{ width: '18px', height: '18px' }} />
+      <div style={statsContainerStyle} role="region" aria-labelledby="stats-title">
+        <h4 id="stats-title" style={statsTitleStyle}>
+          <ChartBarIcon style={{ width: '18px', height: '18px' }} aria-hidden="true" />
           Statistiques du document
         </h4>
 
-        <div style={statsGridStyle}>
-          <div style={statItemStyle}>
-            <div style={statNumberStyle}>{wordCount}</div>
-            <div style={statLabelStyle}>Mots</div>
+        <div style={statsGridStyle} role="group" aria-label="Métriques du document">
+          <div style={statItemStyle} role="text" aria-label={`${wordCount} mots`}>
+            <div style={statNumberStyle} aria-hidden="true">{wordCount}</div>
+            <div style={statLabelStyle} aria-hidden="true">Mots</div>
           </div>
-          <div style={statItemStyle}>
-            <div style={statNumberStyle}>{charCount}</div>
-            <div style={statLabelStyle}>Caractères</div>
+          <div style={statItemStyle} role="text" aria-label={`${charCount} caractères`}>
+            <div style={statNumberStyle} aria-hidden="true">{charCount}</div>
+            <div style={statLabelStyle} aria-hidden="true">Caractères</div>
           </div>
-          <div style={statItemStyle}>
-            <div style={statNumberStyle}>{lineCount}</div>
-            <div style={statLabelStyle}>Lignes</div>
+          <div style={statItemStyle} role="text" aria-label={`${lineCount} lignes`}>
+            <div style={statNumberStyle} aria-hidden="true">{lineCount}</div>
+            <div style={statLabelStyle} aria-hidden="true">Lignes</div>
           </div>
-          <div style={statItemStyle}>
-            <div style={statNumberStyle}>{Math.ceil(wordCount / 200)}</div>
-            <div style={statLabelStyle}>Pages ~</div>
+          <div style={statItemStyle} role="text" aria-label={`environ ${Math.ceil(wordCount / 200)} pages`}>
+            <div style={statNumberStyle} aria-hidden="true">{Math.ceil(wordCount / 200)}</div>
+            <div style={statLabelStyle} aria-hidden="true">Pages ~</div>
           </div>
         </div>
       </div>

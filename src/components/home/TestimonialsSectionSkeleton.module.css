@@ -1,0 +1,103 @@
+/* Skeleton pour TestimonialsSection */
+
+.testimonialsSection {
+  padding: 4rem 2rem;
+  background-color: white;
+}
+
+.testimonialsContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.testimonialsTitleSkeleton {
+  height: 2.5rem;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+  margin-bottom: 3rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.testimonialsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.testimonialCardSkeleton {
+  background-color: #f8fafc;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  border-left: 4px solid #2563eb;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.testimonialStarsSkeleton {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.testimonialStarsSkeleton::before {
+  content: '';
+  width: 6rem;
+  height: 1.25rem;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+}
+
+.testimonialTextSkeleton {
+  height: 3rem;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.testimonialAuthorSkeleton {
+  height: 1.25rem;
+  width: 60%;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.testimonialRoleSkeleton {
+  height: 1rem;
+  width: 40%;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .testimonialsSection {
+    padding: 2rem 1rem;
+  }
+
+  .testimonialsTitleSkeleton {
+    height: 2rem;
+  }
+}

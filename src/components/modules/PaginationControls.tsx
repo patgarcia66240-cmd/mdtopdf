@@ -88,7 +88,8 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         onClick={() => !isNavigationDisabled && currentPage > 1 && handlePageChange(currentPage - 1)}
         disabled={isNavigationDisabled || currentPage <= 1}
         title="Page précédente"
-        aria-label={`Go to page ${currentPage + 1}`}      >
+        aria-label={`Aller à la page ${currentPage - 1}`}
+      >
         <ChevronLeftIcon style={{ width: '12px', height: '12px' }} />
         Précédent
       </button>
@@ -100,8 +101,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         onClick={() => !isNavigationDisabled && currentPage < totalPages && handlePageChange(currentPage + 1)}
         disabled={isNavigationDisabled || currentPage >= totalPages}
         title="Page suivante"
-        aria-label={`Go to page ${currentPage - 1}`}
-        
+        aria-label={`Aller à la page ${currentPage + 1}`}
       >
         Suivant
         <ChevronRightIcon style={{ width: '12px', height: '12px' }} />
